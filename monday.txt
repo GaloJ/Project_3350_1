@@ -1,0 +1,5 @@
+//Galo Jimenez 
+//
+//1. Yes
+//2. Yes
+//3. Origin is an alias for a particlar repository. When you push to origin you are pushing to the origin repository, this alias stores the URL for your repository. 
