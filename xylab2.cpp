@@ -215,20 +215,26 @@ void X11_wrapper::check_resize(XEvent *e)
     }
 }
 //-----------------------------------------------------------------------------
-void make_particle(int x, int y){
+void make_particle(int x, int y,int x_v, int y_v){
     if(g.n < MAX_PARTICLES){
 	particle[g.n].w = 4;
 	particle[g.n].h = 4;
 	particle[g.n].pos[0] = x;
 	particle[g.n].pos[1] = y;
+	particle[g.n].vel[0] = x_v;	
+	particle[g.n].vel[1] = y_v;			
 	++g.n;
     }
 }
 
 void explode(double x, double y){
-//Cirlce spawn, maybe make this into a function later since we will be using it a lot
+/*Cirlce spawn, maybe make this into a function later since we will be using it a lot
+/----------------------------------------------------
+/ Using integers will generate problemsin the future for the particles, we will have to use floats most 
+/ Likely for higher precision
+*/
     for(int i=0; i < 360 ; i = i + 36){
-	make_particle(x + 20 * sin(i*PI/180), y + 20 * cos(i*PI/180));
+	make_particle(x,y, 20 * sin(i*PI/180), 20 * cos(i*PI/180));
     }
 }
 
@@ -250,7 +256,7 @@ void X11_wrapper::check_mouse(XEvent *e)
     }
     if (e->type == ButtonPress) {
 	if (e->xbutton.button==1) {
-	    make_particle(e->xbutton.x , g.yres - e->xbutton.y);
+	    make_particle(e->xbutton.x , g.yres - e->xbutton.y,0,0);
 	}
 	if(e->xbutton.button==3){
 	    explode(e->xbutton.x , g.yres - e->xbutton.y);
@@ -328,14 +334,40 @@ void init_opengl(void)
 void action(void)
 {
     if (g.f>0 && g.s == 1){
-	make_particle(box[0].pos[0]+rand()%20,box[0].pos[1]+40+rand()%20);
+	make_particle(box[0].pos[0]+rand()%20,box[0].pos[1]+40+rand()%20,0,0);
     }	
 }
 
 
 void physics()
 {
+if(g.s == 1){
+        for(int i=0; i < g.n ; i++){
+	    particle[i].vel[0] -= 0.1*particle[i].vel[0];
+	    particle[i].vel[1] -= 0.1*particle[i].vel[1];
+            particle[i].pos[0] -= particle[i].vel[0];
+            particle[i].pos[1] -= particle[i].vel[1];
+            // check if particle went off screen
+            if(particle[i].pos[1] < 0.0 || particle[i].pos[1] > g.yres){
+                particle[i] = particle[--g.n];
+            }
+	    /*
+            for(int j=0;j < MAX_BOXES ; j++){
+                if(particle[i].pos[1] < box[j].pos[1] + box[j].h &&
+                        particle[i].pos[0] > box[j].pos[0] - box[j].w &&
+                        particle[i].pos[0] < box[j].pos[0] + box[j].w &&
+                        particle[i].pos[1] > box[j].pos[1] - box[j].h)
+                {
+                    particle[i].pos[1] = box[j].pos[1] + box[j].h;
+                    particle[i].vel[1] = -particle[i].vel[1] * 0.10;
+                    particle[i].vel[0] -= 0.01;
+                }
 
+            }
+	    */
+
+        }
+    }
 }
 
 
