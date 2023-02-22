@@ -124,7 +124,7 @@ Global::Global()
     yres = 960;
     n = 0;
     f = -1;
-    w = -1;
+    w = 0;
     s = 1;
 }
 
@@ -294,7 +294,7 @@ int X11_wrapper::check_keys(XEvent *e)
 		g.f = -g.f;
 		break;
 	    case XK_w:
-		g.w = -g.w;
+		g.w = 0;
 		break;
 	    case XK_s:
 		g.s = -g.s;
@@ -342,15 +342,28 @@ void action(void)
 void physics()
 {
 if(g.s == 1){
-        for(int i=0; i < g.n ; i++){
+
+    // original particle physics ----------------------------------------------------
+    	for(int i=0; i < g.n ; i++){
+	if(g.w < 500){
 	    particle[i].vel[0] -= 0.1*particle[i].vel[0];
 	    particle[i].vel[1] -= 0.1*particle[i].vel[1];
-            particle[i].pos[0] -= particle[i].vel[0];
-            particle[i].pos[1] -= particle[i].vel[1];
-            // check if particle went off screen
-            if(particle[i].pos[1] < 0.0 || particle[i].pos[1] > g.yres){
-                particle[i] = particle[--g.n];
-            }
+	   	g.w++;
+	}else{
+	    particle[i].vel[1] += 0.2;
+	}
+
+	// this is the bread and butter of the phsyics, should always be running for
+	// all particles, maybe make a function with it
+	particle[i].pos[0] -= particle[i].vel[0];
+	particle[i].pos[1] -= particle[i].vel[1];
+
+	// check if particle went off screen and has to be done to every pattern
+	if(particle[i].pos[1] < 0.0 || particle[i].pos[1] > g.yres){
+	    particle[i] = particle[--g.n];
+	}
+
+	// orignal particle physics ends -----------------------------------------------
 	    /*
             for(int j=0;j < MAX_BOXES ; j++){
                 if(particle[i].pos[1] < box[j].pos[1] + box[j].h &&
@@ -367,6 +380,7 @@ if(g.s == 1){
 	    */
 
         }
+
     }
 }
 
@@ -380,9 +394,12 @@ void render()
     glClear(GL_COLOR_BUFFER_BIT);
 
    const char* words[5] = {"Request" , "Design", "Testing", "Effort" , "Implementation"};
-   char int_str[9];	
+   char int_str[9], int_str_2[9];	
    sprintf(int_str, "%d" , g.n);
    words[0] = int_str;
+   sprintf(int_str_2, "%d" , g.w);
+   words[1] = int_str_2;
+
     /*
      * Draw box
     for(int i = 0; i < MAX_BOXES;i++){
@@ -426,6 +443,20 @@ void render()
     r1.left = g.xres - g.xres*0.1;
     r1.center = 0;
     ggprint8b(&r1,16,0x00ff0000, words[0]);
+
+	r1.bot = g.yres - g.yres*0.125;
+    r1.left = g.xres - g.xres*0.1;
+    r1.center = 0;
+    ggprint8b(&r1,16,0x00ff0000, words[1]);
+
+    r1.bot = g.yres - g.yres*0.15;
+    r1.left = g.xres - g.xres*0.3;
+    r1.center = 0;
+    if (g.s == 1){
+	ggprint8b(&r1,16,0x00ff0000, "Time Not Stopped");
+   }else{
+   	ggprint8b(&r1,16,0x00ff0000, "Time Stopped");
+   } 
     }
 
 
