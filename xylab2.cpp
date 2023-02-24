@@ -35,7 +35,7 @@ class Global {
 } g;
 
 const int MAX_PARTICLES = 10000;
-const int MAX_BOXES = 5;
+const int MAX_VORTEX = 10000;
 
 class Box {
     public:
@@ -47,10 +47,10 @@ class Box {
 	    memcpy(color,col,sizeof(unsigned char) * 3);
 	}
 	Box(){
-	    w = 50.0f;
+	    w = 15.0f;
 	    h = 15.0f;
-	    pos[0]=g.xres*0.1;
-	    pos[1]=g.yres*0.8;
+	    pos[0]=g.xres*0.5;
+	    pos[1]=g.yres*0.5;
 	    vel[0] = 0.0;
 	    vel[1] = 0.0;
 	}
@@ -66,7 +66,7 @@ class Box {
 
 	}
 }
-box[MAX_BOXES], particle[MAX_PARTICLES];
+box, particle[MAX_PARTICLES],vortex[MAX_VORTEX];
 
 
 class X11_wrapper {
@@ -227,6 +227,18 @@ void make_particle(int x, int y,int x_v, int y_v){
     }
 }
 
+void make_vortex(float x, float y, float x_v, float y_v){
+        if (g.n < MAX_PARTICLES){
+	particle[g.n].w = 2;
+        particle[g.n].h = 2;
+        particle[g.n].pos[0] = x;
+        particle[g.n].pos[1] = y;
+        particle[g.n].vel[0] = x_v;
+        particle[g.n].vel[1] = y_v;
+	++g.n;
+    }
+}
+
 void explode(double x, double y){
 /*Cirlce spawn, maybe make this into a function later since we will be using it a lot
 /----------------------------------------------------
@@ -287,11 +299,42 @@ int X11_wrapper::check_keys(XEvent *e)
     int key = XLookupKeysym(&e->xkey, 0);
     if (e->type == KeyPress) {
 	switch (key) {
+	    case XK_Up:
+		if(box.vel[1] < 5)
+			box.vel[1] += 1;
+		if(box.vel[1] < 0)
+                        box.vel[1] -= box.vel[1]*0.25;
+		break;
+	    case XK_Down:
+		if(box.vel[1] > -5)
+			box.vel[1] -= 1;
+		if(box.vel[1] > 0)
+			box.vel[1] -= box.vel[1]*0.25;
+		break;
+	    case XK_Right:
+		if(box.vel[0] < 5)
+			box.vel[0] += 1;
+		if(box.vel[0] < 0)
+                        box.vel[0] -= box.vel[0]*0.25;
+		break;
+	    case XK_Left:
+		if(box.vel[0] > -5)
+			box.vel[0] -= 1;
+		if(box.vel[0] > 0)
+                        box.vel[0] -= box.vel[0]*0.25;
+		break;
 	    case XK_1:
 		//Key 1 was pressed
 		break;
+	    case XK_m:
+		box.vel[0] = 0;
+		box.vel[1] = 0;
+		break;	
 	    case XK_f:
 		g.f = -g.f;
+		break;
+	    case XK_v:
+		make_vortex(200,200,0,0);
 		break;
 	    case XK_w:
 		g.w = 0;
@@ -304,6 +347,7 @@ int X11_wrapper::check_keys(XEvent *e)
 		return 1;
 	}
     }
+    
     return 0;
 }
 
@@ -319,23 +363,15 @@ void init_opengl(void)
     //Set the screen background color
     glClearColor(0.1, 0.1, 0.1, 1.0);
     //Set Box Color
-    for (int i = 0;i < MAX_BOXES;i++){
 	unsigned char c[3] = {100,200,100};
-	box[i].set_color(c);
-	box[i].pos[0] += 100*i;
-	box[i].pos[1] -= 50*i;
+	box.set_color(c);
 	glEnable(GL_TEXTURE_2D);
 	initialize_fonts();
-
-    }
-
 }
 
 void action(void)
 {
-    if (g.f>0 && g.s == 1){
-	make_particle(box[0].pos[0]+rand()%20,box[0].pos[1]+40+rand()%20,0,0);
-    }	
+
 }
 
 
@@ -359,10 +395,11 @@ if(g.s == 1){
 	particle[i].pos[1] -= particle[i].vel[1];
 
 	// check if particle went off screen and has to be done to every pattern
-	if(particle[i].pos[1] < 0.0 || particle[i].pos[1] > g.yres){
+	if(particle[i].pos[1] < 0.0 || particle[i].pos[1] > g.yres ||
+	       	particle[i].pos[0] < 0.0 || particle[i].pos[0] > g.xres){
 	    particle[i] = particle[--g.n];
 	}
-
+	
 	// orignal particle physics ends -----------------------------------------------
 	    /*
             for(int j=0;j < MAX_BOXES ; j++){
@@ -380,8 +417,12 @@ if(g.s == 1){
 	    */
 
         }
+	
+	box.pos[0] += box.vel[0];
+	box.pos[1] += box.vel[1];
 
     }
+
 }
 
 
@@ -399,28 +440,18 @@ void render()
    words[0] = int_str;
    sprintf(int_str_2, "%d" , g.w);
    words[1] = int_str_2;
-
-    /*
-     * Draw box
-    for(int i = 0; i < MAX_BOXES;i++){
+  
+     // Draw box
 	glPushMatrix();
-	glColor3ubv(box[i].color);
-	glTranslatef(box[i].pos[0], box[i].pos[1], 0.0f);
+	glColor3ubv(box.color);
+	glTranslatef(box.pos[0], box.pos[1], 0.0f);
 	glBegin(GL_QUADS);
-	glVertex2f(-box[i].w, -box[i].h);
-	glVertex2f(-box[i].w,  box[i].h);
-	glVertex2f( box[i].w,  box[i].h);
-	glVertex2f( box[i].w, -box[i].h);	
+	glVertex2f(-box.w, -box.h);
+	glVertex2f(-box.w,  box.h);
+	glVertex2f( box.w,  box.h);
+	glVertex2f( box.w, -box.h);	
 	glEnd();
 	glPopMatrix();
-
-	r[i].bot = box[i].pos[1];
-	r[i].left = box[i].pos[0] - 40;
-	r[i].center = 0;
-	ggprint8b(&r[i], 16, 0x00ff0000, words[i]);
-    }
-
-    */
 
     //Draw particle
     for (int i = 0; i<g.n ;i++)
