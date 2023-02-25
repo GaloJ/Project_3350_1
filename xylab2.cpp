@@ -51,7 +51,7 @@ class Box {
 	    w = 15.0f;
 	    h = 15.0f;
 	    pos[0]=g.xres*0.5;
-	    pos[1]=g.yres*0.5;
+	    pos[1]=g.yres*0.25;
 	    vel[0] = 0.0;
 	    vel[1] = 0.0;
 	}
@@ -250,7 +250,7 @@ void explode(double x, double y){
 / Likely for higher precision
 */
     for(int i=0; i < 360 ; i = i + 36){
-	make_particle(x,y, 20 * sin(i*PI/180), 20 * cos(i*PI/180));
+	make_particle(x,y, 5 * sin(i*PI/180), 5 * cos(i*PI/180));
     }
 }
 
@@ -338,7 +338,7 @@ int X11_wrapper::check_keys(XEvent *e)
 		g.f = -g.f;
 		break;
 	    case XK_v:
-		make_vortex(200,200,0,0);
+		make_vortex(g.xres*0.5,g.yres*0.8,0,0);
 		break;
 	    case XK_w:
 		g.w = 0;
@@ -388,9 +388,14 @@ if(g.s == 1){
 	if(particle[i].t == 2){ // Particle type changes physics
 	    particle[i].vel[0] -= 0.1*particle[i].vel[0];
 	    particle[i].vel[1] -= 0.1*particle[i].vel[1];
-	}else if(particle[i].t == 3){
+	    if(abs(particle[i].vel[0]) < 0.01 &&
+		    abs(particle[i].vel[1]) < 0.01)
+		particle[i].t = 3;
+	}else if(particle[i].t == 3){ //Vortex type particles
+	    if (particle[i].pos[1] > box.pos[1]){
 	    particle[i].vel[0] += (particle[i].pos[0]-box.pos[0])*0.001;
 	    particle[i].vel[1] += (particle[i].pos[1]-box.pos[1])*0.001;
+	    }
 	}
 
 	// this is the bread and butter of the phsyics, should always be running for
@@ -405,21 +410,27 @@ if(g.s == 1){
 	}
 	
 	// orignal particle physics ends -----------------------------------------------
-            
-                if(particle[i].pos[1] < box.pos[1] + box.h &&
-                        particle[i].pos[0] > box.pos[0] - box.w &&
-                        particle[i].pos[0] < box.pos[0] + box.w &&
-                        particle[i].pos[1] > box.pos[1] - box.h)
-                {
-			particle[i] = particle[--g.n];
-		}
 
-        }
-	
-	box.pos[0] += box.vel[0];
-	box.pos[1] += box.vel[1];
+	if(particle[i].pos[1] < box.pos[1] + box.h &&
+		particle[i].pos[0] > box.pos[0] - box.w &&
+		particle[i].pos[0] < box.pos[0] + box.w &&
+		particle[i].pos[1] > box.pos[1] - box.h)
+	{
+	    particle[i] = particle[--g.n];
+	    g.w ++;
+	}
 
-    }
+	}// Prevent box to go out of bounds NEEDS WORK
+	if(box.pos[1] > g.yres - box.h || box.pos[0] > g.xres - box.w ||
+		box.pos[0] < box.w || box .pos[1] < box.h)
+	{
+	    box.pos[0] = g.xres*0.5;
+	    box.pos[1] = g.yres*0.5;
+	}else{ // If Box is not out of bounds it works properly
+	    box.pos[0] += box.vel[0];
+	    box.pos[1] += box.vel[1];
+	}
+}
 
 }
 
