@@ -35,18 +35,19 @@ class Global {
 } g;
 
 const int MAX_PARTICLES = 10000;
-const int MAX_VORTEX = 10000;
 
 class Box {
     public:
+	int t;
 	float w,h;
 	float pos[2]; 
-	float vel[2]; 
+	float vel[2];	
 	unsigned char color[3];
 	void set_color(unsigned char col[3]){
 	    memcpy(color,col,sizeof(unsigned char) * 3);
 	}
 	Box(){
+	    t = 1;
 	    w = 15.0f;
 	    h = 15.0f;
 	    pos[0]=g.xres*0.5;
@@ -55,8 +56,9 @@ class Box {
 	    vel[1] = 0.0;
 	}
 
-	Box(float wid, float hgt, int x, int y, float v0,float v1)
+	Box(int type, float wid, float hgt, int x, int y, float v0,float v1)
 	{
+	    t = type;
 	    w = wid;
 	    h = hgt;
 	    pos[0]= x;
@@ -66,7 +68,7 @@ class Box {
 
 	}
 }
-box, particle[MAX_PARTICLES],vortex[MAX_VORTEX];
+box, particle[MAX_PARTICLES];
 
 
 class X11_wrapper {
@@ -215,8 +217,9 @@ void X11_wrapper::check_resize(XEvent *e)
     }
 }
 //-----------------------------------------------------------------------------
-void make_particle(int x, int y,int x_v, int y_v){
+void make_particle(float x, float y,float x_v, float y_v){
     if(g.n < MAX_PARTICLES){
+	particle[g.n].t = 2; //particle type 3 is for vortex
 	particle[g.n].w = 4;
 	particle[g.n].h = 4;
 	particle[g.n].pos[0] = x;
@@ -229,6 +232,7 @@ void make_particle(int x, int y,int x_v, int y_v){
 
 void make_vortex(float x, float y, float x_v, float y_v){
         if (g.n < MAX_PARTICLES){
+	particle[g.n].t = 3; //particle type 3 is for vortex
 	particle[g.n].w = 2;
         particle[g.n].h = 2;
         particle[g.n].pos[0] = x;
@@ -303,25 +307,25 @@ int X11_wrapper::check_keys(XEvent *e)
 		if(box.vel[1] < 5)
 			box.vel[1] += 1;
 		if(box.vel[1] < 0)
-                        box.vel[1] -= box.vel[1]*0.25;
+                        box.vel[1] -= box.vel[1]*0.75;
 		break;
 	    case XK_Down:
 		if(box.vel[1] > -5)
 			box.vel[1] -= 1;
 		if(box.vel[1] > 0)
-			box.vel[1] -= box.vel[1]*0.25;
+			box.vel[1] -= box.vel[1]*0.75;
 		break;
 	    case XK_Right:
 		if(box.vel[0] < 5)
 			box.vel[0] += 1;
 		if(box.vel[0] < 0)
-                        box.vel[0] -= box.vel[0]*0.25;
+                        box.vel[0] -= box.vel[0]*0.75;
 		break;
 	    case XK_Left:
 		if(box.vel[0] > -5)
 			box.vel[0] -= 1;
 		if(box.vel[0] > 0)
-                        box.vel[0] -= box.vel[0]*0.25;
+                        box.vel[0] -= box.vel[0]*0.75;
 		break;
 	    case XK_1:
 		//Key 1 was pressed
@@ -381,12 +385,12 @@ if(g.s == 1){
 
     // original particle physics ----------------------------------------------------
     	for(int i=0; i < g.n ; i++){
-	if(g.w < 500){
+	if(particle[i].t == 2){ // Particle type changes physics
 	    particle[i].vel[0] -= 0.1*particle[i].vel[0];
 	    particle[i].vel[1] -= 0.1*particle[i].vel[1];
-	   	g.w++;
-	}else{
-	    particle[i].vel[1] += 0.2;
+	}else if(particle[i].t == 3){
+	    particle[i].vel[0] += (particle[i].pos[0]-box.pos[0])*0.001;
+	    particle[i].vel[1] += (particle[i].pos[1]-box.pos[1])*0.001;
 	}
 
 	// this is the bread and butter of the phsyics, should always be running for
@@ -401,20 +405,14 @@ if(g.s == 1){
 	}
 	
 	// orignal particle physics ends -----------------------------------------------
-	    /*
-            for(int j=0;j < MAX_BOXES ; j++){
-                if(particle[i].pos[1] < box[j].pos[1] + box[j].h &&
-                        particle[i].pos[0] > box[j].pos[0] - box[j].w &&
-                        particle[i].pos[0] < box[j].pos[0] + box[j].w &&
-                        particle[i].pos[1] > box[j].pos[1] - box[j].h)
+            
+                if(particle[i].pos[1] < box.pos[1] + box.h &&
+                        particle[i].pos[0] > box.pos[0] - box.w &&
+                        particle[i].pos[0] < box.pos[0] + box.w &&
+                        particle[i].pos[1] > box.pos[1] - box.h)
                 {
-                    particle[i].pos[1] = box[j].pos[1] + box[j].h;
-                    particle[i].vel[1] = -particle[i].vel[1] * 0.10;
-                    particle[i].vel[0] -= 0.01;
-                }
-
-            }
-	    */
+			particle[i] = particle[--g.n];
+		}
 
         }
 	
