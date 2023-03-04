@@ -1,11 +1,8 @@
-all: xylab2 aynostroza
+all: xylab2 
 
 xylab2: xylab2.cpp
 	g++ xylab2.cpp libggfonts.a fonts.h -Wall -oxylab2 -lX11 -lGL -lGLU -lm
 
-aynostroza: aynostroza.cpp
-	g++ aynostroza.cpp -Wall -oaynostroza
-
 clean:
-	rm -f xylab2 aynostroza
+	rm -f xylab2 
 

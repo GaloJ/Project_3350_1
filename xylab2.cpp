@@ -26,11 +26,11 @@ using namespace std;
 class Global {
     public:
 	int xres, yres;
+	char keys[65536];
 	int n;
 	int f;
 	int w;
 	int s;
-	float GRAVITY, GRAVITY_temp;
 	Global();
 } g;
 
@@ -40,7 +40,8 @@ class Box {
     public:
 	int t;
 	float w,h;
-	float pos[2]; 
+	float pos[2];
+	float pos_i[2];
 	float vel[2];	
 	unsigned char color[3];
 	void set_color(unsigned char col[3]){
@@ -50,8 +51,10 @@ class Box {
 	    t = 1;
 	    w = 15.0f;
 	    h = 15.0f;
-	    pos[0]=g.xres*0.5;
-	    pos[1]=g.yres*0.25;
+	    pos[0] = g.xres*0.5;
+	    pos[1] = g.yres*0.25;
+		pos_i[0] = pos[0];
+		pos_i[1] = pos[1];	 
 	    vel[0] = 0.0;
 	    vel[1] = 0.0;
 	}
@@ -63,6 +66,8 @@ class Box {
 	    h = hgt;
 	    pos[0]= x;
 	    pos[1]= y;
+		pos_i[0] = x;
+		pos_i[1] = y;
 	    vel[0] = v0;
 	    vel[1] = v1;
 
@@ -122,12 +127,13 @@ int main()
 
 Global::Global()
 {
-    xres = 640;
+    xres = 640; 
     yres = 960;
-    n = 0;
-    f = -1;
-    w = 0;
-    s = 1;
+    n = 0; // Number of particle 
+    f = 0; 
+    w = 0; // Times hit 
+    s = 1; // Time stop
+	memset(keys, 0, 65536);
 }
 
 X11_wrapper::~X11_wrapper()
@@ -225,29 +231,30 @@ void make_particle(int type, int wid, int hei, float x, float y,float x_v, float
 		particle[g.n].h = hei;
 		particle[g.n].pos[0] = x;
 		particle[g.n].pos[1] = y;
+		particle[g.n].pos_i[0] = x;
+		particle[g.n].pos_i[1] = y;
 		particle[g.n].vel[0] = x_v;	
 		particle[g.n].vel[1] = y_v;			
 		++g.n;
     }
 }
 
+void expl_360(int num_p, int t, int w, int h, float x, float y, int v_t){
 /*360 degree attack, 
 num_p is the number of particles created
 t is the type of particle (phsyics)
 w,h are width and height respetively
 x,y are x and y coordinates respetively
 v_t velocity of the outwards particles*/
-
-void expl_360(int num_p, int t, int w, int h, float x, float y, int v_t){
 num_p = 360/num_p;  
     for(int i = 0; i < 360 ; i = i + num_p) { 
 	make_particle(t,w,h,x,y, v_t * sin(i*PI/180), v_t * cos(i*PI/180));
     }
 }
 
-void helix(int num_p, int t, int w, int h, float x, float y, int v_t){
+void helix(int num_p, int t, int w, int h, float x, float y, float v_x, float v_y){
 	for(int i = 0; i < num_p ; i++){
-		make_particle(t,w,h,x,y,5,v_t);
+		make_particle(t,w,h,x,y,v_x,v_y);
 	}
 }
 
@@ -326,7 +333,7 @@ int X11_wrapper::check_keys(XEvent *e)
             box.vel[0] -= box.vel[0]*0.75;
 		break;
 	    case XK_1:
-		helix(1,4,2,2,e->xbutton.x , g.yres - e->xbutton.y,1);
+		helix(1,4,2,2,e->xbutton.x , g.yres - e->xbutton.y,5,5);
 		break;
 		case XK_2:
 		expl_360(16,99,8,8,e->xbutton.x , g.yres - e->xbutton.y,5);
@@ -378,8 +385,15 @@ void init_opengl(void)
 }
 
 void action(void)
+// Function reserved for actions that are persistent, for example making a laser like
+// attack where multiple small particles are made in quick succession 
 {
-
+	/*
+	if(g.f < 100){
+		make_particle(99,1,1,g.xres*0.5,g.yres*0.9, 0, 5);
+		g.f++;
+	}
+	*/	
 }
 
 
@@ -403,8 +417,8 @@ if(g.s == 1){
 	    particle[i].vel[0] += (particle[i].pos[0]-box.pos[0])*0.001;
 	    particle[i].vel[1] += (particle[i].pos[1]-box.pos[1])*0.001;
 	    }
-	}else if(particle[i].t == 4){
-		particle[i].vel[0] += (particle[i].pos[0]-box.pos[0])*0.01;
+	}else if(particle[i].t == 4){ // Sin wave going downwards behaviour
+		particle[i].vel[0] += (particle[i].pos[0]-particle[i].pos_i[0])*0.05;
 	}
 	
 	// this is the bread and butter of the phsyics, should always be running for
