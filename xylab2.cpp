@@ -222,8 +222,7 @@ void X11_wrapper::check_resize(XEvent *e)
 	reshape_window(xce.width, xce.height);
     }
 }
-//-----------------------------------------------------------------------------
-//Important AF!!! Set attributes to particle (attacks)
+
 void make_particle(int type, int wid, int hei, float x, float y,float x_v, float y_v){
     if(g.n < MAX_PARTICLES){
 		particle[g.n].t = type; //particle type 3 is for vortex
@@ -305,6 +304,7 @@ int X11_wrapper::check_keys(XEvent *e)
 {
     if (e->type != KeyPress && e->type != KeyRelease)
 	return 0;
+	
     int key = XLookupKeysym(&e->xkey, 0);
     if (e->type == KeyPress) {
 	switch (key) {
@@ -395,7 +395,6 @@ void action(void)
 	}
 	*/	
 }
-
 
 void physics(){
 if(g.s == 1){
