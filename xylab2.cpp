@@ -18,6 +18,8 @@ using namespace std;
 #include <GL/glx.h>
 #include "fonts.h"
 
+#define rnd() (((Flt)rand())/(Flt)RAND_MAX)
+#define random(a) (rand()%a)
 #define PI 3.14159265
 
 
@@ -31,6 +33,9 @@ class Global {
 	int f;
 	int w;
 	int s;
+	int plyr_decel;
+	int att_count;
+	int difficulty;
 	Global();
 } g;
 
@@ -99,6 +104,7 @@ void init_opengl(void);
 void physics(void);
 void render(void);
 void action(void);
+void attacks(void);
 
 //=====================================
 // MAIN FUNCTION IS HERE
@@ -116,6 +122,7 @@ int main()
 	    x11.check_mouse(&e);
 	    done = x11.check_keys(&e);
 	}
+	attacks();
 	action();
 	physics();
 	render();
@@ -133,6 +140,9 @@ Global::Global()
     f = 0; 
     w = 0; // Times hit 
     s = 1; // Time stop
+	plyr_decel = 0.75; // 0 is full stop, 1 is no decel
+	att_count = 0;
+	difficulty = 50;
 	memset(keys, 0, 65536);
 }
 
@@ -176,7 +186,7 @@ void X11_wrapper::set_title()
 {
     //Set the window title bar.
     XMapWindow(dpy, win);
-    XStoreName(dpy, win, "3350 Lab1");
+    XStoreName(dpy, win, "The Last Hope");
 }
 
 bool X11_wrapper::getXPending()
@@ -257,7 +267,6 @@ void helix(int num_p, int t, int w, int h, float x, float y, float v_x, float v_
 	}
 }
 
-
 void X11_wrapper::check_mouse(XEvent *e)
 {
     static int savex = 0;
@@ -302,35 +311,49 @@ void X11_wrapper::check_mouse(XEvent *e)
 
 int X11_wrapper::check_keys(XEvent *e)
 {
-    if (e->type != KeyPress && e->type != KeyRelease)
+	static int shift=0;
+	if (e->type != KeyRelease && e->type != KeyPress) {
+		//not a keyboard event
+		return 0;
+	}
+	int key = (XLookupKeysym(&e->xkey, 0) & 0x0000ffff);
+	//Log("key: %i\n", key);
+	if (e->type == KeyRelease) {
+		g.keys[key] = 0;
+		if (key == XK_Shift_L || key == XK_Shift_R)
+			shift = 0;
+		return 0;
+	}
+	if (e->type == KeyPress) {
+		//std::cout << "press" << std::endl;
+		g.keys[key]=1;
+		if (key == XK_Shift_L || key == XK_Shift_R) {
+			shift = 1;
+			return 0;
+		}
+	}
+	(void)shift;
+	switch (key) {
+		case XK_Escape:
+			return 1;
+		case XK_f:
+			break;
+		case XK_s:
+			break;
+		case XK_Down:
+			break;
+		case XK_equal:
+			break;
+		case XK_minus:
+			break;
+	}
 	return 0;
-	
+}
+
+	/*
     int key = XLookupKeysym(&e->xkey, 0);
     if (e->type == KeyPress) {
 	switch (key) {
-	    case XK_Up:
-		if(box.vel[1] < 5)
-			box.vel[1] += 1;
-		if(box.vel[1] < 0)
-            box.vel[1] -= box.vel[1]*0.75;
-		break;
-	    case XK_Down:
-		if(box.vel[1] > -5)
-			box.vel[1] -= 1;
-		if(box.vel[1] > 0)
-			box.vel[1] -= box.vel[1]*0.75;
-		break;
-	    case XK_Right:
-		if(box.vel[0] < 5)
-			box.vel[0] += 1;
-		if(box.vel[0] < 0)
-            box.vel[0] -= box.vel[0]*0.75;
-		break;
-	    case XK_Left:
-		if(box.vel[0] > -5)
-			box.vel[0] -= 1;
-		if(box.vel[0] > 0)
-            box.vel[0] -= box.vel[0]*0.75;
 		break;
 	    case XK_1:
 		helix(1,4,2,2,e->xbutton.x , g.yres - e->xbutton.y,5,5);
@@ -362,9 +385,7 @@ int X11_wrapper::check_keys(XEvent *e)
 		return 1;
 	}
     }
-    
-    return 0;
-}
+	*/
 
 void init_opengl(void)
 {
@@ -384,16 +405,53 @@ void init_opengl(void)
 	initialize_fonts();
 }
 
+void attacks(void){
+
+	if (g.att_count == 50){
+	expl_360(random(128),random(4),2,2,g.xres*0.5, g.xres*0.8,random(10));
+	g.att_count = 0;
+	}else{
+		g.att_count ++;
+	}
+}
+
 void action(void)
 // Function reserved for actions that are persistent, for example making a laser like
 // attack where multiple small particles are made in quick succession 
 {
-	/*
-	if(g.f < 100){
-		make_particle(99,1,1,g.xres*0.5,g.yres*0.9, 0, 5);
-		g.f++;
+
+	if (g.keys[XK_Up]){
+		if(box.vel[1] <= 0)
+			box.vel[1] = 0;		
+		if(box.vel[1] < 5)
+			box.vel[1] += 0.5;
 	}
-	*/	
+	if (g.keys[XK_Down]){
+		if(box.vel[1] >= 0)
+			box.vel[1] = 0;	
+		if(box.vel[1] > -5)
+			box.vel[1] -= 0.5;
+	}
+	if (g.keys[XK_Right]){
+		if(box.vel[0] < 5)
+			box.vel[0] += 1.5;
+		if(box.vel[0] < 0)
+            box.vel[0] -= box.vel[0]*0.75;
+	}
+	if (g.keys[XK_Left]){
+		if(box.vel[0] > -5)
+			box.vel[0] -= 1.5;
+		if(box.vel[0] > 0)
+            box.vel[0] -= box.vel[0]*0.75;
+	}
+	// Big deceleration when no keys pressed
+	if(!g.keys[XK_Up] && !g.keys[XK_Down]){
+	box.vel[1] = box.vel[1]*g.plyr_decel;
+	}
+	if(!g.keys[XK_Right] && !g.keys[XK_Left]){
+	box.vel[0] = box.vel[0]*g.plyr_decel;
+	}
+
 }
 
 void physics(){
@@ -453,18 +511,9 @@ if(g.s == 1){
 void render()
 {
 
-    // Font init goes here? Maybe
+	Rect r1;
+	glClear(GL_COLOR_BUFFER_BIT);
 
-    Rect r1;
-    glClear(GL_COLOR_BUFFER_BIT);
-
-   const char* words[5] = {"Request" , "Design", "Testing", "Effort" , "Implementation"};
-   char int_str[9], int_str_2[9];	
-   sprintf(int_str, "%d" , g.n);
-   words[0] = int_str;
-   sprintf(int_str_2, "%d" , g.w);
-   words[1] = int_str_2;
-  
      // Draw box
 	glPushMatrix();
 	glColor3ubv(box.color);
@@ -493,6 +542,21 @@ void render()
 	glPopMatrix();
     }
 
+	// SCREEN WRITINGS
+
+	const char* words[5] = {"Request" , "Design", "Testing", "Effort" , "Implementation"};
+	char int_str[9], int_str_2[9], int_str_3[9];	
+	
+	//Create a char string, and give it the int value to char of a global
+	sprintf(int_str, "%d" , g.n);
+	words[0] = int_str;
+
+	sprintf(int_str_2, "%d" , g.w);
+	words[1] = int_str_2;
+
+	sprintf(int_str_3, "%d" , g.att_count);
+	words[2] = int_str_3;
+
     // Draw instructions, should have made it with a loop but I'm lazy? I think xD
     r1.bot = g.yres - g.yres*0.1;
     r1.left = g.xres - g.xres*0.1;
@@ -503,6 +567,11 @@ void render()
     r1.left = g.xres - g.xres*0.1;
     r1.center = 0;
     ggprint8b(&r1,16,0x00ff0000, words[1]);
+
+	r1.bot = g.yres - g.yres*0.15;
+    r1.left = g.xres - g.xres*0.1;
+    r1.center = 0;
+    ggprint8b(&r1,16,0x00ff0000, words[2]);
 
     r1.bot = g.yres - g.yres*0.15;
     r1.left = g.xres - g.xres*0.3;
