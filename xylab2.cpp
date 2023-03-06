@@ -22,9 +22,6 @@ using namespace std;
 #define random(a) (rand()%a)
 #define PI 3.14159265
 
-
-//some structures
-
 class Global {
     public:
 	int xres, yres;
@@ -105,6 +102,11 @@ void physics(void);
 void render(void);
 void action(void);
 void attacks(void);
+
+//Extern Galo prototypes
+extern void expl_360(int,int,int,int,float,float,int);
+extern void helix(int,int,int,int,float,float,float);
+extern void attacks(void);
 
 //=====================================
 // MAIN FUNCTION IS HERE
@@ -233,6 +235,7 @@ void X11_wrapper::check_resize(XEvent *e)
     }
 }
 
+
 void make_particle(int type, int wid, int hei, float x, float y,float x_v, float y_v){
     if(g.n < MAX_PARTICLES){
 		particle[g.n].t = type; //particle type 3 is for vortex
@@ -246,25 +249,6 @@ void make_particle(int type, int wid, int hei, float x, float y,float x_v, float
 		particle[g.n].vel[1] = y_v;			
 		++g.n;
     }
-}
-
-void expl_360(int num_p, int t, int w, int h, float x, float y, int v_t){
-/*360 degree attack, 
-num_p is the number of particles created
-t is the type of particle (phsyics)
-w,h are width and height respetively
-x,y are x and y coordinates respetively
-v_t velocity of the outwards particles*/
-num_p = 360/num_p;  
-    for(int i = 0; i < 360 ; i = i + num_p) { 
-	make_particle(t,w,h,x,y, v_t * sin(i*PI/180), v_t * cos(i*PI/180));
-    }
-}
-
-void helix(int num_p, int t, int w, int h, float x, float y, float v_x, float v_y){
-	for(int i = 0; i < num_p ; i++){
-		make_particle(t,w,h,x,y,v_x,v_y);
-	}
 }
 
 void X11_wrapper::check_mouse(XEvent *e)
@@ -403,16 +387,6 @@ void init_opengl(void)
 	box.set_color(c);
 	glEnable(GL_TEXTURE_2D);
 	initialize_fonts();
-}
-
-void attacks(void){
-
-	if (g.att_count == 50){
-	expl_360(random(128),random(4),2,2,g.xres*0.5, g.xres*0.8,random(10));
-	g.att_count = 0;
-	}else{
-		g.att_count ++;
-	}
 }
 
 void action(void)

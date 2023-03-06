@@ -1,0 +1,57 @@
+// Galo Jimenez
+
+#include <iostream>
+using namespace std;
+#include <stdio.h>
+#include <unistd.h>
+#include <cstdlib>
+#include <ctime>
+#include <cstring>
+#include <cmath>
+#include <X11/Xlib.h>
+#include <X11/keysym.h>
+#include <GL/glx.h>
+#include "fonts.h"
+
+#define rnd() (((Flt)rand())/(Flt)RAND_MAX)
+#define random(a) (rand()%a)
+#define PI 3.14159265
+
+Global();
+g;
+
+extern void make_particle(int,int,int,float,float,float,float);
+
+
+void expl_360(int num_p, int t, int w, int h, float x, float y, int v_t)
+{
+/*360 degree attack, 
+num_p is the number of particles created
+t is the type of particle (phsyics)
+w,h are width and height respetively
+x,y are x and y coordinates respetively
+v_t velocity of the outwards particles*/
+num_p = 360/num_p;
+    for(int i = 0; i < 360 ; i = i + num_p) {
+        make_particle(t,w,h,x,y, v_t * sin(i*PI/180), v_t * cos(i*PI/180));
+    }
+}
+
+void helix(int num_p, int t, int w, int h, float x, float y, float v_x, float v_y)
+{
+//helix logic inside of the physics function
+    for(int i = 0; i < num_p ; i++){
+                make_particle(t,w,h,x,y,v_x,v_y);
+        }
+}
+
+void attacks(void){
+
+        if (g.att_count == 50){
+        expl_360(random(128),random(4),2,2,g.xres*0.5, g.xres*0.8,random(10));
+        g.att_count = 0;
+        }else{
+                g.att_count ++;
+        }
+}
+
