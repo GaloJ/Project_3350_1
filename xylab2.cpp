@@ -17,65 +17,51 @@ using namespace std;
 #include <X11/keysym.h>
 #include <GL/glx.h>
 #include "fonts.h"
+#include "global.h"
 
 #define rnd() (((Flt)rand())/(Flt)RAND_MAX)
 #define random(a) (rand()%a)
 #define PI 3.14159265
 
-class Global {
-    public:
-	int xres, yres;
-	char keys[65536];
-	int n;
-	int f;
-	int w;
-	int s;
-	int plyr_decel;
-	int att_count;
-	int difficulty;
-	Global();
-} g;
-
-const int MAX_PARTICLES = 10000;
+Global g;
 
 class Box {
     public:
-	int t;
-	float w,h;
-	float pos[2];
-	float pos_i[2];
-	float vel[2];	
-	unsigned char color[3];
-	void set_color(unsigned char col[3]){
-	    memcpy(color,col,sizeof(unsigned char) * 3);
-	}
-	Box(){
-	    t = 1;
-	    w = 15.0f;
-	    h = 15.0f;
-	    pos[0] = g.xres*0.5;
-	    pos[1] = g.yres*0.25;
-		pos_i[0] = pos[0];
-		pos_i[1] = pos[1];	 
-	    vel[0] = 0.0;
-	    vel[1] = 0.0;
-	}
+        int t;
+        float w,h;
+        float pos[2];
+        float pos_i[2];
+        float vel[2];
+        unsigned char color[3];
+        void set_color(unsigned char col[3]){
+            memcpy(color,col,sizeof(unsigned char) * 3);
+        }
+        Box(){
+            t = 1;
+            w = 10.0f;
+            h = 10.0f;
+            pos[0] = g.xres*0.5;
+            pos[1] = g.yres*0.25;
+            pos_i[0] = pos[0];
+            pos_i[1] = pos[1];
+            vel[0] = 0.0;
+            vel[1] = 0.0;
+        }
 
-	Box(int type, float wid, float hgt, float x, float y, float v0,float v1)
-	{
-	    t = type;
-	    w = wid;
-	    h = hgt;
-	    pos[0]= x;
-	    pos[1]= y;
-		pos_i[0] = x;
-		pos_i[1] = y;
-	    vel[0] = v0;
-	    vel[1] = v1;
+        Box(int type, float wid, float hgt, float x, float y, float v0,float v1)
+        {
+            t = type;
+            w = wid;
+            h = hgt;
+            pos[0]= x;
+            pos[1]= y;
+            pos_i[0] = x;
+            pos_i[1] = y;
+            vel[0] = v0;
+            vel[1] = v1;
 
-	}
-}
-box, particle[MAX_PARTICLES];
+        }
+}box,particle[MAX_PARTICLES];
 
 
 class X11_wrapper {
@@ -107,6 +93,8 @@ void attacks(void);
 extern void expl_360(int,int,int,int,float,float,int);
 extern void helix(int,int,int,int,float,float,float);
 extern void attacks(void);
+extern void physics(void);
+extern void screen_write(void);
 
 //=====================================
 // MAIN FUNCTION IS HERE
@@ -132,20 +120,6 @@ int main()
 	usleep(20000);
     }
     return 0;
-}
-
-Global::Global()
-{
-    xres = 640; 
-    yres = 960;
-    n = 0; // Number of particle 
-    f = 0; 
-    w = 0; // Times hit 
-    s = 1; // Time stop
-	plyr_decel = 0.75; // 0 is full stop, 1 is no decel
-	att_count = 0;
-	difficulty = 50;
-	memset(keys, 0, 65536);
 }
 
 X11_wrapper::~X11_wrapper()
@@ -432,59 +406,58 @@ void physics(){
 if(g.s == 1){
     for(int i=0; i < g.n ; i++){
 
-	// check if particle went off screen and has to be done to every pattern
-	if(particle[i].pos[1] < 0.0 || particle[i].pos[1] > g.yres ||
-	       	particle[i].pos[0] < 0.0 || particle[i].pos[0] > g.xres){
-	    particle[i] = particle[--g.n];
-	}
+        // check if particle went off screen and has to be done to every pattern
+        if(particle[i].pos[1] < 0.0 || particle[i].pos[1] > g.yres ||
+                particle[i].pos[0] < 0.0 || particle[i].pos[0] > g.xres){
+            particle[i] = particle[--g.n];
+        }
 
-	if(particle[i].t == 2){ // Decelerate particle -> Type 3 at 0 velocity
-	    particle[i].vel[0] -= 0.1*particle[i].vel[0];
-	    particle[i].vel[1] -= 0.1*particle[i].vel[1];
-	    if(abs(particle[i].vel[0]) < 0.01 && abs(particle[i].vel[1]) < 0.01)
-			particle[i].t = 3;
-	}else if(particle[i].t == 3){ //Homing type particle
-	    if (particle[i].pos[1] > box.pos[1]){
-	    particle[i].vel[0] += (particle[i].pos[0]-box.pos[0])*0.001;
-	    particle[i].vel[1] += (particle[i].pos[1]-box.pos[1])*0.001;
-	    }
-	}else if(particle[i].t == 4){ // Sin wave going downwards behaviour
-		particle[i].vel[0] += (particle[i].pos[0]-particle[i].pos_i[0])*0.05;
-	}
-	
-	// this is the bread and butter of the phsyics, should always be running for
-	// all particles, maybe make a function with it
-	particle[i].pos[0] -= particle[i].vel[0];
-	particle[i].pos[1] -= particle[i].vel[1];
-	
-		// Box and particle collision hitbox logic, needs work at high velocity
-	if(particle[i].pos[1] - particle[i].h < box.pos[1] + box.h &&
-		particle[i].pos[0] + particle[i].w > box.pos[0] - box.w &&
-		particle[i].pos[0] - particle[i].w< box.pos[0] + box.w &&
-		particle[i].pos[1] + particle[i].h > box.pos[1] - box.h)
-	{
-	    particle[i] = particle[--g.n];
-	    g.w ++;
-	}
+        if(particle[i].t == 2){ // Decelerate particle -> Type 3 at 0 velocity
+            particle[i].vel[0] -= 0.1*particle[i].vel[0];
+            particle[i].vel[1] -= 0.1*particle[i].vel[1];
+            if(abs(particle[i].vel[0]) < 0.01 && abs(particle[i].vel[1]) < 0.01)
+                        particle[i].t = 3;
+        }else if(particle[i].t == 3){ //Homing type particle
+            if (particle[i].pos[1] > box.pos[1]){
+            particle[i].vel[0] += (particle[i].pos[0]-box.pos[0])*0.001;
+            particle[i].vel[1] += (particle[i].pos[1]-box.pos[1])*0.001;
+            }
+        }else if(particle[i].t == 4){ // Sin wave going downwards behaviour
+           particle[i].vel[0] += (particle[i].pos[0]-particle[i].pos_i[0])*0.05;
+        }
 
-	}
-	// Prevent box to go out of bounds NEEDS WORK
-	if(box.pos[1] > g.yres - box.h || box.pos[0] > g.xres - box.w ||
-		box.pos[0] < box.w || box .pos[1] < box.h)
-	{
-	    box.pos[0] = g.xres*0.5;
-	    box.pos[1] = g.yres*0.5;
-	}else{ // If Box is not out of bounds it works properly
-	    box.pos[0] += box.vel[0];
-	    box.pos[1] += box.vel[1];
-	}
+        // this is the bread and butter of the phsyics, 
+        // should always be running for
+        // all particles, maybe make a function with it
+        particle[i].pos[0] -= particle[i].vel[0];
+        particle[i].pos[1] -= particle[i].vel[1];
+
+        if(particle[i].pos[1] - particle[i].h < box.pos[1] + box.h &&
+                particle[i].pos[0] + particle[i].w > box.pos[0] - box.w &&
+                particle[i].pos[0] - particle[i].w< box.pos[0] + box.w &&
+                particle[i].pos[1] + particle[i].h > box.pos[1] - box.h)
+        {
+            particle[i] = particle[--g.n];
+            g.w ++;
+        }
+
+        }
+        // Prevent box to go out of bounds NEEDS WORK
+        if(box.pos[1] > g.yres - box.h || box.pos[0] > g.xres - box.w ||
+                box.pos[0] < box.w || box .pos[1] < box.h)
+        {
+            box.pos[0] = g.xres*0.5;
+            box.pos[1] = g.yres*0.5;
+        }else{ // If Box is not out of bounds it works properly
+            box.pos[0] += box.vel[0];
+            box.pos[1] += box.vel[1];
+        }
 }
 
 }
 
 void render()
 {
-
 	Rect r1;
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -518,47 +491,6 @@ void render()
 
 	// SCREEN WRITINGS
 
-	const char* words[5] = {"Request" , "Design", "Testing", "Effort" , "Implementation"};
-	char int_str[9], int_str_2[9], int_str_3[9];	
-	
-	//Create a char string, and give it the int value to char of a global
-	sprintf(int_str, "%d" , g.n);
-	words[0] = int_str;
 
-	sprintf(int_str_2, "%d" , g.w);
-	words[1] = int_str_2;
-
-	sprintf(int_str_3, "%d" , g.att_count);
-	words[2] = int_str_3;
-
-    // Draw instructions, should have made it with a loop but I'm lazy? I think xD
-    r1.bot = g.yres - g.yres*0.1;
-    r1.left = g.xres - g.xres*0.1;
-    r1.center = 0;
-    ggprint8b(&r1,16,0x00ff0000, words[0]);
-
-	r1.bot = g.yres - g.yres*0.125;
-    r1.left = g.xres - g.xres*0.1;
-    r1.center = 0;
-    ggprint8b(&r1,16,0x00ff0000, words[1]);
-
-	r1.bot = g.yres - g.yres*0.15;
-    r1.left = g.xres - g.xres*0.1;
-    r1.center = 0;
-    ggprint8b(&r1,16,0x00ff0000, words[2]);
-
-    r1.bot = g.yres - g.yres*0.15;
-    r1.left = g.xres - g.xres*0.3;
-    r1.center = 0;
-    if (g.s == 1){
-	ggprint8b(&r1,16,0x00ff0000, "Time Not Stopped");
-   }else{
-   	ggprint8b(&r1,16,0x00ff0000, "Time Stopped");
-   } 
+    void screen_write();
     }
-
-
-
-
-
-
