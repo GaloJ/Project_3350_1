@@ -19,10 +19,6 @@ using namespace std;
 #include "fonts.h"
 #include "global.h"
 
-#define rnd() (((Flt)rand())/(Flt)RAND_MAX)
-#define random(a) (rand()%a)
-#define PI 3.14159265
-
 Global g;
 
 class Box {
@@ -94,7 +90,7 @@ extern void expl_360(int,int,int,int,float,float,int);
 extern void helix(int,int,int,int,float,float,float);
 extern void attacks(void);
 extern void physics(void);
-extern void screen_write(void);
+extern void screen_write(Rect);
 
 //=====================================
 // MAIN FUNCTION IS HERE
@@ -490,7 +486,5 @@ void render()
     }
 
 	// SCREEN WRITINGS
-
-
-    void screen_write();
+    screen_write(r1);
     }
