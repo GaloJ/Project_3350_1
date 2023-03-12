@@ -87,10 +87,11 @@ void attacks(void);
 
 //Extern Galo prototypes
 extern void expl_360(int,int,int,int,float,float,int);
-extern void helix(int,int,int,int,float,float,float);
+extern void spiral_360(int,int,int,int,float,float,int);
 extern void attacks(void);
 extern void physics(void);
 extern void screen_write(Rect);
+extern int random(int);
 
 //=====================================
 // MAIN FUNCTION IS HERE
@@ -99,14 +100,13 @@ int main()
 {
     init_opengl();
     //Main loop
-    int done = 0;
-    while (!done) {
+    while (!g.done) {
 	//Process external events.
 	while (x11.getXPending()) {
 	    XEvent e = x11.getXNextEvent();
 	    x11.check_resize(&e);
 	    x11.check_mouse(&e);
-	    done = x11.check_keys(&e);
+		x11.check_keys(&e);
 	}
 	attacks();
 	action();
@@ -221,6 +221,21 @@ void make_particle(int type, int wid, int hei, float x, float y,float x_v, float
     }
 }
 
+void make_particle_2(int type, int wid, int hei, float x, float y,float xi, float yi,float x_v, float y_v){
+    if(g.n < MAX_PARTICLES){
+		particle[g.n].t = type; //particle type 3 is for vortex
+		particle[g.n].w = wid;
+		particle[g.n].h = hei;
+		particle[g.n].pos[0] = x;
+		particle[g.n].pos[1] = y;
+		particle[g.n].pos_i[0] = xi;
+		particle[g.n].pos_i[1] = yi;
+		particle[g.n].vel[0] = x_v;	
+		particle[g.n].vel[1] = y_v;			
+		++g.n;
+    }
+}
+
 void X11_wrapper::check_mouse(XEvent *e)
 {
     static int savex = 0;
@@ -265,7 +280,6 @@ void X11_wrapper::check_mouse(XEvent *e)
 
 int X11_wrapper::check_keys(XEvent *e)
 {
-	static int shift=0;
 	if (e->type != KeyRelease && e->type != KeyPress) {
 		//not a keyboard event
 		return 0;
@@ -274,72 +288,19 @@ int X11_wrapper::check_keys(XEvent *e)
 	//Log("key: %i\n", key);
 	if (e->type == KeyRelease) {
 		g.keys[key] = 0;
-		if (key == XK_Shift_L || key == XK_Shift_R)
-			shift = 0;
 		return 0;
 	}
+
 	if (e->type == KeyPress) {
 		//std::cout << "press" << std::endl;
 		g.keys[key]=1;
-		if (key == XK_Shift_L || key == XK_Shift_R) {
-			shift = 1;
 			return 0;
 		}
-	}
-	(void)shift;
-	switch (key) {
-		case XK_Escape:
-			return 1;
-		case XK_f:
-			break;
-		case XK_s:
-			break;
-		case XK_Down:
-			break;
-		case XK_equal:
-			break;
-		case XK_minus:
-			break;
-	}
+
+
+
 	return 0;
 }
-
-	/*
-    int key = XLookupKeysym(&e->xkey, 0);
-    if (e->type == KeyPress) {
-	switch (key) {
-		break;
-	    case XK_1:
-		helix(1,4,2,2,e->xbutton.x , g.yres - e->xbutton.y,5,5);
-		break;
-		case XK_2:
-		expl_360(16,99,8,8,e->xbutton.x , g.yres - e->xbutton.y,5);
-		break;
-		case XK_3:
-		expl_360(64,2,2,2,e->xbutton.x , g.yres - e->xbutton.y,20);
-		break;
-		case XK_m:
-		box.vel[0] = 0;
-		box.vel[1] = 0;
-		break;	
-	    case XK_f:
-		g.f = -g.f;
-		break;
-	    case XK_v:
-		// temp
-		break;
-	    case XK_w:
-		g.w = 0;
-		break;
-	    case XK_s:
-		g.s = -g.s;
-		break;		
-	    case XK_Escape:
-		//Escape key was pressed
-		return 1;
-	}
-    }
-	*/
 
 void init_opengl(void)
 {
@@ -363,6 +324,9 @@ void action(void)
 // Function reserved for actions that are persistent, for example making a laser like
 // attack where multiple small particles are made in quick succession 
 {
+	int static toggle_d = 0;
+	int static toggle_att = 0;
+	int static toggle_s = 0;
 
 	if (g.keys[XK_Up]){
 		if(box.vel[1] <= 0)
@@ -396,6 +360,73 @@ void action(void)
 	box.vel[0] = box.vel[0]*g.plyr_decel;
 	}
 
+	if(g.keys[XK_d] && toggle_d == 0){
+		if(g.d == 0){
+			g.d = 1;
+		}else{
+			g.d = 0;
+		}
+		toggle_d = 1;
+	}else if(!g.keys[XK_d] && toggle_d == 1){
+		toggle_d = 0;
+	}
+
+	if(g.keys[XK_a] && toggle_att == 0){
+		if(g.att == 0){
+			g.att = 1;
+		}else{
+			g.att = 0;
+		}
+		toggle_att = 1;
+	}else if(!g.keys[XK_a] && toggle_att == 1){
+		toggle_att = 0;
+	}
+
+	if(g.d ==1){
+		if(g.keys[XK_1]){
+			g.a_1 = 30;
+		}
+
+		if(g.keys[XK_2]){
+			g.a_2 = 10;
+		}
+
+		if(g.keys[XK_3]){
+			g.a_3 = 67;
+		}
+
+		if(g.keys[XK_4]){
+			g.a_4 = 10;
+		}
+
+		if(g.keys[XK_5]){
+			g.a_5 = 100;
+		}
+
+		if(g.keys[XK_6]){
+			g.a_6 = 40;
+		}
+
+		if(g.keys[XK_7]){
+			g.a_7 = 200;
+		}
+
+		if(g.keys[XK_s] && toggle_s == 0){
+			if(g.s == 0){
+				g.s = 1;
+			}else{
+				g.s = 0;
+			}
+			toggle_s = 1;
+		}else if(!g.keys[XK_s] && toggle_s == 1){
+			toggle_s = 0;
+	}
+	}
+
+	if(g.keys[XK_Escape]){
+		g.done = 1;
+	}
+
 }
 
 void physics(){
@@ -407,20 +438,50 @@ if(g.s == 1){
                 particle[i].pos[0] < 0.0 || particle[i].pos[0] > g.xres){
             particle[i] = particle[--g.n];
         }
-
-        if(particle[i].t == 2){ // Decelerate particle -> Type 3 at 0 velocity
+		if(particle[i].t == 1){
+			particle[i].vel[1] += random(3)*0.1;
+			particle[i].vel[0] += (random(5) - 3)*0.05;
+		}else if(particle[i].t == 2){ // Decelerate particle -> Type 3 at 0 velocity
             particle[i].vel[0] -= 0.1*particle[i].vel[0];
             particle[i].vel[1] -= 0.1*particle[i].vel[1];
             if(abs(particle[i].vel[0]) < 0.01 && abs(particle[i].vel[1]) < 0.01)
-                        particle[i].t = 3;
+                particle[i].t = 3;
         }else if(particle[i].t == 3){ //Homing type particle
             if (particle[i].pos[1] > box.pos[1]){
             particle[i].vel[0] += (particle[i].pos[0]-box.pos[0])*0.001;
             particle[i].vel[1] += (particle[i].pos[1]-box.pos[1])*0.001;
             }
         }else if(particle[i].t == 4){ // Sin wave going downwards behaviour
-           particle[i].vel[0] += (particle[i].pos[0]-particle[i].pos_i[0])*0.05;
+        	particle[i].vel[0] += (particle[i].pos[0]-particle[i].pos_i[0])*0.05;
+        }else if(particle[i].t == 5){ // oscilate point
+        	particle[i].vel[0] += (particle[i].pos[0]-particle[i].pos_i[0])*0.001;
+        	particle[i].vel[1] += (particle[i].pos[1]-particle[i].pos_i[1])*0.001;
+			if(g.a_3 == 1){
+				particle[i].t = 6;
+			}
+		}else if(particle[i].t == 6){ // Decelerate particle -> Type 3 at 0 velocity
+            particle[i].vel[0] += 0.01*particle[i].vel[0];
+            particle[i].vel[1] += 0.01*particle[i].vel[1];
+		}else if(particle[i].t == 7){ // Decelerate particle -> Type 3 at 0 velocity
+            particle[i].vel[0] -= 0.1*particle[i].vel[0];
+            particle[i].vel[1] -= 0.1*particle[i].vel[1];
+            if(abs(particle[i].vel[0]) < 0.01 && abs(particle[i].vel[1]) < 0.01)
+                particle[i].t = 1;
+        }else if(particle[i].t == 8){ // Decelerate particle -> Type 9 at 0 velocity
+            particle[i].vel[0] -= 0.0125*particle[i].vel[0];
+            particle[i].vel[1] -= 0.0125*particle[i].vel[1];
+            if(abs(particle[i].vel[0]) < 2 && abs(particle[i].vel[1]) < 2)
+                particle[i].t = 9;
+        }else if(particle[i].t == 9){ // flip velocity vector 
+            particle[i].vel[0] = -particle[i].vel[0];
+            particle[i].vel[1] = -particle[i].vel[1];
+			particle[i].t = 10;
+		}else if(particle[i].t == 10){ // Decelerate particle -> Type 9 at 0 velocity
+            particle[i].vel[0] += 0.025*particle[i].vel[0];
+            particle[i].vel[1] += 0.025*particle[i].vel[1];
         }
+        
+		//BM p4 explosion xD
 
         // this is the bread and butter of the phsyics, 
         // should always be running for
@@ -437,13 +498,19 @@ if(g.s == 1){
             g.w ++;
         }
 
-        }
-        // Prevent box to go out of bounds NEEDS WORK
-        if(box.pos[1] > g.yres - box.h || box.pos[0] > g.xres - box.w ||
-                box.pos[0] < box.w || box .pos[1] < box.h)
-        {
-            box.pos[0] = g.xres*0.5;
-            box.pos[1] = g.yres*0.5;
+        }// Check if box will go out of bounds
+        if(box.pos[1] > g.yres - box.h){
+			box.vel[1] = 0;
+			box.pos[1] = g.yres - box.h;
+		}else if(box.pos[1] < box.h){
+			box.vel[1] = 0;
+			box.pos[1] = box.h;
+        }else if(box.pos[0] > g.xres - box.w ){
+			box.vel[0] = 0;
+			box.pos[0] = g.xres - box.w;
+        }else if(box.pos[0] < box.w){
+			box.vel[0] = 0;
+			box.pos[0] = box.w;
         }else{ // If Box is not out of bounds it works properly
             box.pos[0] += box.vel[0];
             box.pos[1] += box.vel[1];
