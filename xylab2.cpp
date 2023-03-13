@@ -17,56 +17,47 @@ using namespace std;
 #include <X11/keysym.h>
 #include <GL/glx.h>
 #include "fonts.h"
+#include "global.h"
 
-#define PI 3.14159265
-
-
-//some structures
-
-class Global {
-    public:
-	int xres, yres;
-	int n;
-	int f;
-	int w;
-	int s;
-	float GRAVITY, GRAVITY_temp;
-	Global();
-} g;
-
-const int MAX_PARTICLES = 10000;
-const int MAX_BOXES = 5;
+Global g;
 
 class Box {
     public:
-	float w,h;
-	float pos[2]; 
-	float vel[2]; 
-	unsigned char color[3];
-	void set_color(unsigned char col[3]){
-	    memcpy(color,col,sizeof(unsigned char) * 3);
-	}
-	Box(){
-	    w = 50.0f;
-	    h = 15.0f;
-	    pos[0]=g.xres*0.1;
-	    pos[1]=g.yres*0.8;
-	    vel[0] = 0.0;
-	    vel[1] = 0.0;
-	}
+        int t;
+        float w,h;
+        float pos[2];
+        float pos_i[2];
+        float vel[2];
+        unsigned char color[3];
+        void set_color(unsigned char col[3]){
+            memcpy(color,col,sizeof(unsigned char) * 3);
+        }
+        Box(){
+            t = 1;
+            w = 10.0f;
+            h = 10.0f;
+            pos[0] = g.xres*0.5;
+            pos[1] = g.yres*0.25;
+            pos_i[0] = pos[0];
+            pos_i[1] = pos[1];
+            vel[0] = 0.0;
+            vel[1] = 0.0;
+        }
 
-	Box(float wid, float hgt, int x, int y, float v0,float v1)
-	{
-	    w = wid;
-	    h = hgt;
-	    pos[0]= x;
-	    pos[1]= y;
-	    vel[0] = v0;
-	    vel[1] = v1;
+        Box(int type, float wid, float hgt, float x, float y, float v0,float v1)
+        {
+            t = type;
+            w = wid;
+            h = hgt;
+            pos[0]= x;
+            pos[1]= y;
+            pos_i[0] = x;
+            pos_i[1] = y;
+            vel[0] = v0;
+            vel[1] = v1;
 
-	}
-}
-box[MAX_BOXES], particle[MAX_PARTICLES];
+        }
+}box,particle[MAX_PARTICLES];
 
 
 class X11_wrapper {
@@ -92,6 +83,15 @@ void init_opengl(void);
 void physics(void);
 void render(void);
 void action(void);
+void attacks(void);
+
+//Extern Galo prototypes
+extern void expl_360(int,int,int,int,float,float,int);
+extern void spiral_360(int,int,int,int,float,float,int);
+extern void attacks(void);
+extern void physics(void);
+extern void screen_write(Rect);
+extern int random(int);
 
 //=====================================
 // MAIN FUNCTION IS HERE
@@ -100,15 +100,15 @@ int main()
 {
     init_opengl();
     //Main loop
-    int done = 0;
-    while (!done) {
+    while (!g.done) {
 	//Process external events.
 	while (x11.getXPending()) {
 	    XEvent e = x11.getXNextEvent();
 	    x11.check_resize(&e);
 	    x11.check_mouse(&e);
-	    done = x11.check_keys(&e);
+		x11.check_keys(&e);
 	}
+	attacks();
 	action();
 	physics();
 	render();
@@ -116,16 +116,6 @@ int main()
 	usleep(20000);
     }
     return 0;
-}
-
-Global::Global()
-{
-    xres = 640;
-    yres = 960;
-    n = 0;
-    f = -1;
-    w = -1;
-    s = 1;
 }
 
 X11_wrapper::~X11_wrapper()
@@ -168,7 +158,7 @@ void X11_wrapper::set_title()
 {
     //Set the window title bar.
     XMapWindow(dpy, win);
-    XStoreName(dpy, win, "3350 Lab1");
+    XStoreName(dpy, win, "The Last Hope");
 }
 
 bool X11_wrapper::getXPending()
@@ -214,21 +204,35 @@ void X11_wrapper::check_resize(XEvent *e)
 	reshape_window(xce.width, xce.height);
     }
 }
-//-----------------------------------------------------------------------------
-void make_particle(int x, int y){
+
+
+void make_particle(int type, int wid, int hei, float x, float y,float x_v, float y_v){
     if(g.n < MAX_PARTICLES){
-	particle[g.n].w = 4;
-	particle[g.n].h = 4;
-	particle[g.n].pos[0] = x;
-	particle[g.n].pos[1] = y;
-	++g.n;
+		particle[g.n].t = type; //particle type 3 is for vortex
+		particle[g.n].w = wid;
+		particle[g.n].h = hei;
+		particle[g.n].pos[0] = x;
+		particle[g.n].pos[1] = y;
+		particle[g.n].pos_i[0] = x;
+		particle[g.n].pos_i[1] = y;
+		particle[g.n].vel[0] = x_v;	
+		particle[g.n].vel[1] = y_v;			
+		++g.n;
     }
 }
 
-void explode(double x, double y){
-//Cirlce spawn, maybe make this into a function later since we will be using it a lot
-    for(int i=0; i < 360 ; i = i + 36){
-	make_particle(x + 20 * sin(i*PI/180), y + 20 * cos(i*PI/180));
+void make_particle_2(int type, int wid, int hei, float x, float y,float xi, float yi,float x_v, float y_v){
+    if(g.n < MAX_PARTICLES){
+		particle[g.n].t = type; //particle type 3 is for vortex
+		particle[g.n].w = wid;
+		particle[g.n].h = hei;
+		particle[g.n].pos[0] = x;
+		particle[g.n].pos[1] = y;
+		particle[g.n].pos_i[0] = xi;
+		particle[g.n].pos_i[1] = yi;
+		particle[g.n].vel[0] = x_v;	
+		particle[g.n].vel[1] = y_v;			
+		++g.n;
     }
 }
 
@@ -250,10 +254,10 @@ void X11_wrapper::check_mouse(XEvent *e)
     }
     if (e->type == ButtonPress) {
 	if (e->xbutton.button==1) {
-	    make_particle(e->xbutton.x , g.yres - e->xbutton.y);
+	    make_particle(2,4,4,e->xbutton.x , g.yres - e->xbutton.y,0,0);
 	}
 	if(e->xbutton.button==3){
-	    explode(e->xbutton.x , g.yres - e->xbutton.y);
+	    expl_360(32,99,4,4,e->xbutton.x , g.yres - e->xbutton.y,5);
 	}	
 	return ;
 
@@ -276,29 +280,26 @@ void X11_wrapper::check_mouse(XEvent *e)
 
 int X11_wrapper::check_keys(XEvent *e)
 {
-    if (e->type != KeyPress && e->type != KeyRelease)
-	return 0;
-    int key = XLookupKeysym(&e->xkey, 0);
-    if (e->type == KeyPress) {
-	switch (key) {
-	    case XK_1:
-		//Key 1 was pressed
-		break;
-	    case XK_f:
-		g.f = -g.f;
-		break;
-	    case XK_w:
-		g.w = -g.w;
-		break;
-	    case XK_s:
-		g.s = -g.s;
-		break;		
-	    case XK_Escape:
-		//Escape key was pressed
-		return 1;
+	if (e->type != KeyRelease && e->type != KeyPress) {
+		//not a keyboard event
+		return 0;
 	}
-    }
-    return 0;
+	int key = (XLookupKeysym(&e->xkey, 0) & 0x0000ffff);
+	//Log("key: %i\n", key);
+	if (e->type == KeyRelease) {
+		g.keys[key] = 0;
+		return 0;
+	}
+
+	if (e->type == KeyPress) {
+		//std::cout << "press" << std::endl;
+		g.keys[key]=1;
+			return 0;
+		}
+
+
+
+	return 0;
 }
 
 void init_opengl(void)
@@ -313,65 +314,227 @@ void init_opengl(void)
     //Set the screen background color
     glClearColor(0.1, 0.1, 0.1, 1.0);
     //Set Box Color
-    for (int i = 0;i < MAX_BOXES;i++){
 	unsigned char c[3] = {100,200,100};
-	box[i].set_color(c);
-	box[i].pos[0] += 100*i;
-	box[i].pos[1] -= 50*i;
+	box.set_color(c);
 	glEnable(GL_TEXTURE_2D);
 	initialize_fonts();
-
-    }
-
 }
 
 void action(void)
+// Function reserved for actions that are persistent, for example making a laser like
+// attack where multiple small particles are made in quick succession 
 {
-    if (g.f>0 && g.s == 1){
-	make_particle(box[0].pos[0]+rand()%20,box[0].pos[1]+40+rand()%20);
-    }	
+	int static toggle_d = 0;
+	int static toggle_att = 0;
+	int static toggle_s = 0;
+
+	if (g.keys[XK_Up]){
+		if(box.vel[1] <= 0)
+			box.vel[1] = 0;		
+		if(box.vel[1] < 5)
+			box.vel[1] += 0.5;
+	}
+	if (g.keys[XK_Down]){
+		if(box.vel[1] >= 0)
+			box.vel[1] = 0;	
+		if(box.vel[1] > -5)
+			box.vel[1] -= 0.5;
+	}
+	if (g.keys[XK_Right]){
+		if(box.vel[0] < 5)
+			box.vel[0] += 1.5;
+		if(box.vel[0] < 0)
+            box.vel[0] -= box.vel[0]*0.75;
+	}
+	if (g.keys[XK_Left]){
+		if(box.vel[0] > -5)
+			box.vel[0] -= 1.5;
+		if(box.vel[0] > 0)
+            box.vel[0] -= box.vel[0]*0.75;
+	}
+	// Big deceleration when no keys pressed
+	if(!g.keys[XK_Up] && !g.keys[XK_Down]){
+	box.vel[1] = box.vel[1]*g.plyr_decel;
+	}
+	if(!g.keys[XK_Right] && !g.keys[XK_Left]){
+	box.vel[0] = box.vel[0]*g.plyr_decel;
+	}
+
+	if(g.keys[XK_d] && toggle_d == 0){
+		if(g.d == 0){
+			g.d = 1;
+		}else{
+			g.d = 0;
+		}
+		toggle_d = 1;
+	}else if(!g.keys[XK_d] && toggle_d == 1){
+		toggle_d = 0;
+	}
+
+	if(g.keys[XK_a] && toggle_att == 0){
+		if(g.att == 0){
+			g.att = 1;
+		}else{
+			g.att = 0;
+		}
+		toggle_att = 1;
+	}else if(!g.keys[XK_a] && toggle_att == 1){
+		toggle_att = 0;
+	}
+
+	if(g.d ==1){
+		if(g.keys[XK_1]){
+			g.a_1 = 30;
+		}
+
+		if(g.keys[XK_2]){
+			g.a_2 = 10;
+		}
+
+		if(g.keys[XK_3]){
+			g.a_3 = 67;
+		}
+
+		if(g.keys[XK_4]){
+			g.a_4 = 10;
+		}
+
+		if(g.keys[XK_5]){
+			g.a_5 = 100;
+		}
+
+		if(g.keys[XK_6]){
+			g.a_6 = 40;
+		}
+
+		if(g.keys[XK_7]){
+			g.a_7 = 200;
+		}
+
+		if(g.keys[XK_s] && toggle_s == 0){
+			if(g.s == 0){
+				g.s = 1;
+			}else{
+				g.s = 0;
+			}
+			toggle_s = 1;
+		}else if(!g.keys[XK_s] && toggle_s == 1){
+			toggle_s = 0;
+	}
+	}
+
+	if(g.keys[XK_Escape]){
+		g.done = 1;
+	}
+
 }
 
+void physics(){
+if(g.s == 1){
+    for(int i=0; i < g.n ; i++){
 
-void physics()
-{
+        // check if particle went off screen and has to be done to every pattern
+        if(particle[i].pos[1] < 0.0 || particle[i].pos[1] > g.yres ||
+                particle[i].pos[0] < 0.0 || particle[i].pos[0] > g.xres){
+            particle[i] = particle[--g.n];
+        }
+		if(particle[i].t == 1){
+			particle[i].vel[1] += random(3)*0.1;
+			particle[i].vel[0] += (random(5) - 3)*0.05;
+		}else if(particle[i].t == 2){ // Decelerate particle -> Type 3 at 0 velocity
+            particle[i].vel[0] -= 0.1*particle[i].vel[0];
+            particle[i].vel[1] -= 0.1*particle[i].vel[1];
+            if(abs(particle[i].vel[0]) < 0.01 && abs(particle[i].vel[1]) < 0.01)
+                particle[i].t = 3;
+        }else if(particle[i].t == 3){ //Homing type particle
+            if (particle[i].pos[1] > box.pos[1]){
+            particle[i].vel[0] += (particle[i].pos[0]-box.pos[0])*0.001;
+            particle[i].vel[1] += (particle[i].pos[1]-box.pos[1])*0.001;
+            }
+        }else if(particle[i].t == 4){ // Sin wave going downwards behaviour
+        	particle[i].vel[0] += (particle[i].pos[0]-particle[i].pos_i[0])*0.05;
+        }else if(particle[i].t == 5){ // oscilate point
+        	particle[i].vel[0] += (particle[i].pos[0]-particle[i].pos_i[0])*0.001;
+        	particle[i].vel[1] += (particle[i].pos[1]-particle[i].pos_i[1])*0.001;
+			if(g.a_3 == 1){
+				particle[i].t = 6;
+			}
+		}else if(particle[i].t == 6){ // Decelerate particle -> Type 3 at 0 velocity
+            particle[i].vel[0] += 0.01*particle[i].vel[0];
+            particle[i].vel[1] += 0.01*particle[i].vel[1];
+		}else if(particle[i].t == 7){ // Decelerate particle -> Type 3 at 0 velocity
+            particle[i].vel[0] -= 0.1*particle[i].vel[0];
+            particle[i].vel[1] -= 0.1*particle[i].vel[1];
+            if(abs(particle[i].vel[0]) < 0.01 && abs(particle[i].vel[1]) < 0.01)
+                particle[i].t = 1;
+        }else if(particle[i].t == 8){ // Decelerate particle -> Type 9 at 0 velocity
+            particle[i].vel[0] -= 0.0125*particle[i].vel[0];
+            particle[i].vel[1] -= 0.0125*particle[i].vel[1];
+            if(abs(particle[i].vel[0]) < 2 && abs(particle[i].vel[1]) < 2)
+                particle[i].t = 9;
+        }else if(particle[i].t == 9){ // flip velocity vector 
+            particle[i].vel[0] = -particle[i].vel[0];
+            particle[i].vel[1] = -particle[i].vel[1];
+			particle[i].t = 10;
+		}else if(particle[i].t == 10){ // Decelerate particle -> Type 9 at 0 velocity
+            particle[i].vel[0] += 0.025*particle[i].vel[0];
+            particle[i].vel[1] += 0.025*particle[i].vel[1];
+        }
+        
+		//BM p4 explosion xD
 
+        // this is the bread and butter of the phsyics, 
+        // should always be running for
+        // all particles, maybe make a function with it
+        particle[i].pos[0] -= particle[i].vel[0];
+        particle[i].pos[1] -= particle[i].vel[1];
+
+        if(particle[i].pos[1] - particle[i].h < box.pos[1] + box.h &&
+                particle[i].pos[0] + particle[i].w > box.pos[0] - box.w &&
+                particle[i].pos[0] - particle[i].w< box.pos[0] + box.w &&
+                particle[i].pos[1] + particle[i].h > box.pos[1] - box.h)
+        {
+            particle[i] = particle[--g.n];
+            g.w ++;
+        }
+
+        }// Check if box will go out of bounds
+        if(box.pos[1] > g.yres - box.h){
+			box.vel[1] = 0;
+			box.pos[1] = g.yres - box.h;
+		}else if(box.pos[1] < box.h){
+			box.vel[1] = 0;
+			box.pos[1] = box.h;
+        }else if(box.pos[0] > g.xres - box.w ){
+			box.vel[0] = 0;
+			box.pos[0] = g.xres - box.w;
+        }else if(box.pos[0] < box.w){
+			box.vel[0] = 0;
+			box.pos[0] = box.w;
+        }else{ // If Box is not out of bounds it works properly
+            box.pos[0] += box.vel[0];
+            box.pos[1] += box.vel[1];
+        }
 }
 
+}
 
 void render()
 {
+	Rect r1;
+	glClear(GL_COLOR_BUFFER_BIT);
 
-    // Font init goes here? Maybe
-
-    Rect r1;
-    glClear(GL_COLOR_BUFFER_BIT);
-
-   const char* words[5] = {"Request" , "Design", "Testing", "Effort" , "Implementation"};
-   char int_str[9];	
-   sprintf(int_str, "%d" , g.n);
-   words[0] = int_str;
-    /*
-     * Draw box
-    for(int i = 0; i < MAX_BOXES;i++){
+     // Draw box
 	glPushMatrix();
-	glColor3ubv(box[i].color);
-	glTranslatef(box[i].pos[0], box[i].pos[1], 0.0f);
+	glColor3ubv(box.color);
+	glTranslatef(box.pos[0], box.pos[1], 0.0f);
 	glBegin(GL_QUADS);
-	glVertex2f(-box[i].w, -box[i].h);
-	glVertex2f(-box[i].w,  box[i].h);
-	glVertex2f( box[i].w,  box[i].h);
-	glVertex2f( box[i].w, -box[i].h);	
+	glVertex2f(-box.w, -box.h);
+	glVertex2f(-box.w,  box.h);
+	glVertex2f( box.w,  box.h);
+	glVertex2f( box.w, -box.h);	
 	glEnd();
 	glPopMatrix();
-
-	r[i].bot = box[i].pos[1];
-	r[i].left = box[i].pos[0] - 40;
-	r[i].center = 0;
-	ggprint8b(&r[i], 16, 0x00ff0000, words[i]);
-    }
-
-    */
 
     //Draw particle
     for (int i = 0; i<g.n ;i++)
@@ -389,15 +552,6 @@ void render()
 	glPopMatrix();
     }
 
-    // Draw instructions, should have made it with a loop but I'm lazy? I think xD
-    r1.bot = g.yres - g.yres*0.1;
-    r1.left = g.xres - g.xres*0.1;
-    r1.center = 0;
-    ggprint8b(&r1,16,0x00ff0000, words[0]);
+	// SCREEN WRITINGS
+    screen_write(r1);
     }
-
-
-
-
-
-

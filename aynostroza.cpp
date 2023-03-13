@@ -1,11 +1,14 @@
 //Arjun Ynostroza
-//aynostroza.cpp
-//test code for git
 #include <iostream>
-
-int main()
-{
-    std::cout << "This is a push to GitHub\n";
-    return 0;
-}
+#include <stdio.h>
+#include <unistd.h>
+#include <cstdlib>
+#include <ctime>
+#include <cstring>
+#include <cmath>
+#include <X11/Xlib.h>
+#include <X11/keysym.h>
+#include <GL/glx.h>
+#include "fonts.h"
+#include "global.h"
 
