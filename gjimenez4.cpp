@@ -190,10 +190,16 @@ void screen_write(Rect r1)
     }
 
     r1.bot = g.yres - g.yres*0.2;
-    r1.left = g.xres - g.xres*0.3;
+    r1.left = g.xres - g.xres*0.2;
     r1.center = 0;
     if (g.d == 1){
 	ggprint8b(&r1,16,0x00ff0000, "DEBUG ON");
+	r1.bot -= 20;
+	ggprint8b(&r1,16,0x00ff0000, "1 - 7 for attacks");
+	r1.bot -= 20;
+	ggprint8b(&r1,16,0x00ff0000, "s to stop time");
+	r1.bot -= 20;
+	ggprint8b(&r1,16,0x00ff0000, "placeholder");
     }
 
 

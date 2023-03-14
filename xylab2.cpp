@@ -18,46 +18,55 @@ using namespace std;
 #include <GL/glx.h>
 #include "fonts.h"
 #include "global.h"
+#include "box.h"
 
-Global g;
+Global::Global()
+{
+    xres = 640;
+    yres = 960;
+    att = 0;
+    d = 0;
+    s = 1;
+    n = 0;
+    w = 0;
+    done = 0;
+    a_1 = a_2 = a_3 = a_4 = a_5 = a_6 = a_7 = 0;
+    rep_ctr = 0;
+    plyr_decel = 0.75; // 0 is full stop, 1 is no decel
+    curr_att = 10; //Number of attacks left per attack cycle
+    att_count = 1; // Must be 1 or all attacks proc at the start
+    difficulty = 50;
+    memset(keys, 0, 65536);
+}Global g;
 
-class Box {
-    public:
-        int t;
-        float w,h;
-        float pos[2];
-        float pos_i[2];
-        float vel[2];
-        unsigned char color[3];
-        void set_color(unsigned char col[3]){
-            memcpy(color,col,sizeof(unsigned char) * 3);
-        }
-        Box(){
-            t = 1;
-            w = 10.0f;
-            h = 10.0f;
-            pos[0] = g.xres*0.5;
-            pos[1] = g.yres*0.25;
-            pos_i[0] = pos[0];
-            pos_i[1] = pos[1];
-            vel[0] = 0.0;
-            vel[1] = 0.0;
-        }
+Box::Box(){
+    t = 1;
+    w = 10.0f;
+    h = 10.0f;
+    pos[0] = g.xres*0.5;
+    pos[1] = g.yres*0.25;
+    pos_i[0] = pos[0];
+    pos_i[1] = pos[1];
+    vel[0] = 0.0;
+    vel[1] = 0.0;
+}
 
-        Box(int type, float wid, float hgt, float x, float y, float v0,float v1)
-        {
-            t = type;
-            w = wid;
-            h = hgt;
-            pos[0]= x;
-            pos[1]= y;
-            pos_i[0] = x;
-            pos_i[1] = y;
-            vel[0] = v0;
-            vel[1] = v1;
+Box::Box(int type, float wid, float hgt, float x, float y, float v0,float v1)
+{
+    t = type;
+    w = wid;
+    h = hgt;
+    pos[0]= x;
+    pos[1]= y;
+    pos_i[0] = x;
+    pos_i[1] = y;
+    vel[0] = v0;
+    vel[1] = v1;
 
-        }
-}box,particle[MAX_PARTICLES];
+}
+
+Box box;
+Box particle[MAX_PARTICLES];
 
 
 class X11_wrapper {
@@ -327,6 +336,8 @@ void action(void)
 	int static toggle_d = 0;
 	int static toggle_att = 0;
 	int static toggle_s = 0;
+        int static toggle_r = 0;
+	
 
 	if (g.keys[XK_Up]){
 		if(box.vel[1] <= 0)
@@ -360,7 +371,7 @@ void action(void)
 	box.vel[0] = box.vel[0]*g.plyr_decel;
 	}
 
-	if(g.keys[XK_d] && toggle_d == 0){
+	if(g.keys[XK_d] && toggle_d == 0){//------------d
 		if(g.d == 0){
 			g.d = 1;
 		}else{
@@ -371,7 +382,7 @@ void action(void)
 		toggle_d = 0;
 	}
 
-	if(g.keys[XK_a] && toggle_att == 0){
+	if(g.keys[XK_a] && toggle_att == 0){//-----------att
 		if(g.att == 0){
 			g.att = 1;
 		}else{
@@ -381,6 +392,19 @@ void action(void)
 	}else if(!g.keys[XK_a] && toggle_att == 1){
 		toggle_att = 0;
 	}
+
+        if(g.keys[XK_r] && toggle_r == 0){//-----------------r
+                if(g.rep_ctr == 0){
+		   	g.rep_ctr = 1;
+                }else{
+			g.rep_ctr = 0;
+		}
+                toggle_r = 1;
+        }else if(!g.keys[XK_r] && toggle_r == 1){
+                toggle_r = 0;
+        }
+
+
 
 	if(g.d ==1){
 		if(g.keys[XK_1]){
@@ -480,7 +504,12 @@ if(g.s == 1){
             particle[i].vel[0] += 0.025*particle[i].vel[0];
             particle[i].vel[1] += 0.025*particle[i].vel[1];
         }
-        
+
+	if(g.rep_ctr == 1){
+	particle[i].vel[0] += (particle[i].pos[0]+box.pos[0])*0.01;
+        particle[i].vel[1] += (particle[i].pos[1]+box.pos[1])*0.01;
+	}
+        g.rep_ctr = 0;
 		//BM p4 explosion xD
 
         // this is the bread and butter of the phsyics, 
