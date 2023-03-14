@@ -13,16 +13,31 @@ using namespace std;
 #include <GL/glx.h>
 #include "fonts.h"
 #include "global.h"
+#include "box.h"
 
 #define PI 3.14159265
 
 extern Global g;
+extern Box box;
+extern Box particle[MAX_PARTICLES];
 
 extern void make_particle(int,int,int,float,float,float,float);
 extern void make_particle_2(int,int,int,float,float,float,float,float,float);
 
 int random(int a){
 	return (rand()%a) + 1;
+}
+
+float inv_tan(float a, float b){
+	if(a > 0 && b > 0){//1st
+		return atan(a/b);
+	}else if(a < 0 && b > 0){//4th
+		return (2*PI) + atan(a/b);    
+	}else if(a < 0 && b < 0){//3rd
+		return (atan(a/b) + PI);
+	}else{
+		return (PI + atan(a/b));//2nd
+	}
 }
 
 void expl_360(int num_p, int t, int w, int h, float x, float y, int v_t)
@@ -200,6 +215,8 @@ void screen_write(Rect r1)
 	ggprint8b(&r1,16,0x00ff0000, "s to stop time");
 	r1.bot -= 20;
 	ggprint8b(&r1,16,0x00ff0000, "placeholder");
+
+
     }
 
 
