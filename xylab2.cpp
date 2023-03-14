@@ -20,6 +20,8 @@ using namespace std;
 #include "global.h"
 #include "box.h"
 
+#define PI 3.14159265
+
 Global::Global()
 {
     xres = 640;
@@ -101,6 +103,7 @@ extern void attacks(void);
 extern void physics(void);
 extern void screen_write(Rect);
 extern int random(int);
+extern float inv_tan(float, float);
 
 //=====================================
 // MAIN FUNCTION IS HERE
@@ -194,7 +197,6 @@ void X11_wrapper::reshape_window(int width, int height)
     //window has been resized.
     g.xres = width;
     g.yres = height;
-    //
     glViewport(0, 0, (GLint)width, (GLint)height);
     glMatrixMode(GL_PROJECTION); glLoadIdentity();
     glMatrixMode(GL_MODELVIEW); glLoadIdentity();
@@ -263,7 +265,7 @@ void X11_wrapper::check_mouse(XEvent *e)
     }
     if (e->type == ButtonPress) {
 	if (e->xbutton.button==1) {
-	    make_particle(2,4,4,e->xbutton.x , g.yres - e->xbutton.y,0,0);
+	    make_particle(99,4,4,e->xbutton.x , g.yres - e->xbutton.y,0,0);
 	}
 	if(e->xbutton.button==3){
 	    expl_360(32,99,4,4,e->xbutton.x , g.yres - e->xbutton.y,5);
@@ -336,8 +338,7 @@ void action(void)
 	int static toggle_d = 0;
 	int static toggle_att = 0;
 	int static toggle_s = 0;
-        int static toggle_r = 0;
-	
+	int static toggle_r = 0;
 
 	if (g.keys[XK_Up]){
 		if(box.vel[1] <= 0)
@@ -393,17 +394,16 @@ void action(void)
 		toggle_att = 0;
 	}
 
-        if(g.keys[XK_r] && toggle_r == 0){//-----------------r
+        if(g.keys[XK_r] && toggle_r == 0){//-----------att
                 if(g.rep_ctr == 0){
-		   	g.rep_ctr = 1;
+                        g.rep_ctr = 1;
                 }else{
-			g.rep_ctr = 0;
-		}
+                        g.rep_ctr = 0;
+                }
                 toggle_r = 1;
         }else if(!g.keys[XK_r] && toggle_r == 1){
                 toggle_r = 0;
         }
-
 
 
 	if(g.d ==1){
@@ -504,14 +504,30 @@ if(g.s == 1){
             particle[i].vel[0] += 0.025*particle[i].vel[0];
             particle[i].vel[1] += 0.025*particle[i].vel[1];
         }
-
-	if(g.rep_ctr == 1){
-	particle[i].vel[0] += (particle[i].pos[0]+box.pos[0])*0.01;
-        particle[i].vel[1] += (particle[i].pos[1]+box.pos[1])*0.01;
-	}
-        g.rep_ctr = 0;
 		//BM p4 explosion xD
-
+	
+		if (g.rep_ctr == 1){ // Repel physics logic
+		    float xf = particle[i].pos[0] - box.pos[0];
+		    float yf = -(box.pos[1] - particle[i].pos[1]);
+		    float mag = hypot(xf,yf);
+		    //float theta = atan(yf/xf);
+		    float theta = inv_tan(yf,xf);
+		    if(yf >= 0 && xf >= 0 && mag < 150){//1st
+			particle[i].vel[0] -= (200000/pow(mag,3))*xf*cos(theta);
+                    	particle[i].vel[1] -= (200000/pow(mag,3))*yf*sin(theta);
+		    }else if(yf <= 0 && xf >= 0 && mag < 150){//4th
+			particle[i].vel[0] -= (200000/pow(mag,3))*xf*cos(theta);
+                        particle[i].vel[1] += (200000/pow(mag,3))*yf*sin(theta);
+		    }else if(yf <= 0 && xf <= 0 && mag < 150){//3rd
+			particle[i].vel[0] += (200000/pow(mag,3))*xf*cos(theta);
+                        particle[i].vel[1] += (200000/pow(mag,3))*yf*sin(theta);			
+		    }else if (yf >= 0 && xf <= 0 && mag < 150){
+			particle[i].vel[0] += (200000/pow(mag,3))*xf*cos(theta);
+                        particle[i].vel[1] -= (200000/pow(mag,3))*yf*sin(theta);
+		    }
+		}
+	
+		
         // this is the bread and butter of the phsyics, 
         // should always be running for
         // all particles, maybe make a function with it
@@ -545,11 +561,12 @@ if(g.s == 1){
             box.pos[1] += box.vel[1];
         }
 }
-
+g.rep_ctr = 0; // so that it only happends once
 }
 
 void render()
 {
+    static int t = 20;
 	Rect r1;
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -580,6 +597,22 @@ void render()
 	glEnd();
 	glPopMatrix();
     }
+
+    	if(g.d == 1){	
+     	glColor3f(0.0, 1.0, 0.0);
+    	glBegin(GL_TRIANGLE_STRIP);
+        glVertex2i(0,0);
+        glVertex2i(t,t);
+        glVertex2i(0,g.yres);
+        glVertex2i(t,g.yres-t);
+        glVertex2i(g.xres, g.yres);
+        glVertex2i(g.xres-t,g.yres-t);
+        glVertex2i(g.xres,0);
+        glVertex2i(g.xres-t,t);
+        glVertex2i(0,0);
+        glVertex2i(t,t);
+    	glEnd();
+	}
 
 	// SCREEN WRITINGS
     screen_write(r1);
