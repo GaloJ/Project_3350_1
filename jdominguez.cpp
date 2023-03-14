@@ -18,7 +18,7 @@ class Menu_box {
 	float w,h;
 	float pos[1];
 	unsigned char color[2];
-	void color_set(unsigned char col[2] * 2){
+	void color_set(unsigned char col[2]){
 		memcpy(color, col, sizeof(unsigned char) * 3);
 	}
 	Menu_box(float wid, float hgt, float x, float y){
@@ -27,4 +27,4 @@ class Menu_box {
 	    pos[0] = x;
 	    pos[1] = y;
 	}
-}
+};
