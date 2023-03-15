@@ -14,7 +14,6 @@ class Global {
 	int s; // time stop
 	int d;// debug mode
 	int done; // check if game is done
-	int plyr_decel;
 	int curr_att;
 	int att_count;
 	int difficulty;

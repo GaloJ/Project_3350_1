@@ -34,7 +34,6 @@ Global::Global()
     done = 0;
     a_1 = a_2 = a_3 = a_4 = a_5 = a_6 = a_7 = 0;
     rep_ctr = 0;
-    plyr_decel = 0.75; // 0 is full stop, 1 is no decel
     curr_att = 10; //Number of attacks left per attack cycle
     att_count = 1; // Must be 1 or all attacks proc at the start
     difficulty = 50;
@@ -308,8 +307,6 @@ int X11_wrapper::check_keys(XEvent *e)
 			return 0;
 		}
 
-
-
 	return 0;
 }
 
@@ -335,41 +332,45 @@ void action(void)
 // Function reserved for actions that are persistent, for example making a laser like
 // attack where multiple small particles are made in quick succession 
 {
-	int static toggle_d = 0;
+	int static deaccel = 0.75;
+    	int static toggle_d = 0;
 	int static toggle_att = 0;
 	int static toggle_s = 0;
 	int static toggle_r = 0;
+	int static max_spd = 5;
+
 
 	if (g.keys[XK_Up]){
 		if(box.vel[1] <= 0)
-			box.vel[1] = 0;		
-		if(box.vel[1] < 5)
-			box.vel[1] += 0.5;
+		    	box.vel[1] = 0;		
+		if(box.vel[1] < max_spd)
+			box.vel[1] += 1.5;
 	}
 	if (g.keys[XK_Down]){
 		if(box.vel[1] >= 0)
 			box.vel[1] = 0;	
-		if(box.vel[1] > -5)
-			box.vel[1] -= 0.5;
+		if(box.vel[1] > -max_spd)
+			box.vel[1] -= 1.5;
 	}
 	if (g.keys[XK_Right]){
-		if(box.vel[0] < 5)
-			box.vel[0] += 1.5;
-		if(box.vel[0] < 0)
-            box.vel[0] -= box.vel[0]*0.75;
+		if(box.vel[0] <= 0)
+			box.vel[0] = 0;
+		if(box.vel[0] < max_spd)
+            		box.vel[0] += 1.5;
 	}
 	if (g.keys[XK_Left]){
-		if(box.vel[0] > -5)
-			box.vel[0] -= 1.5;
-		if(box.vel[0] > 0)
-            box.vel[0] -= box.vel[0]*0.75;
+		if(box.vel[0] >= 0)
+			box.vel[0] = 0;
+		if(box.vel[0] > -max_spd)
+            		box.vel[0] -= 1.5;
 	}
 	// Big deceleration when no keys pressed
 	if(!g.keys[XK_Up] && !g.keys[XK_Down]){
-	box.vel[1] = box.vel[1]*g.plyr_decel;
+		box.vel[1] = box.vel[1]*deaccel;
 	}
+	
 	if(!g.keys[XK_Right] && !g.keys[XK_Left]){
-	box.vel[0] = box.vel[0]*g.plyr_decel;
+	box.vel[0] = box.vel[0]*deaccel;
 	}
 
 	if(g.keys[XK_d] && toggle_d == 0){//------------d
@@ -450,7 +451,6 @@ void action(void)
 	if(g.keys[XK_Escape]){
 		g.done = 1;
 	}
-
 }
 
 void physics(){
@@ -515,15 +515,19 @@ if(g.s == 1){
 		    if(yf >= 0 && xf >= 0 && mag < 150){//1st
 			particle[i].vel[0] -= (200000/pow(mag,3))*xf*cos(theta);
                     	particle[i].vel[1] -= (200000/pow(mag,3))*yf*sin(theta);
+			particle[i].t = 99;
 		    }else if(yf <= 0 && xf >= 0 && mag < 150){//4th
 			particle[i].vel[0] -= (200000/pow(mag,3))*xf*cos(theta);
                         particle[i].vel[1] += (200000/pow(mag,3))*yf*sin(theta);
+			particle[i].t = 99;
 		    }else if(yf <= 0 && xf <= 0 && mag < 150){//3rd
 			particle[i].vel[0] += (200000/pow(mag,3))*xf*cos(theta);
-                        particle[i].vel[1] += (200000/pow(mag,3))*yf*sin(theta);			
+                        particle[i].vel[1] += (200000/pow(mag,3))*yf*sin(theta);
+			particle[i].t = 99;			
 		    }else if (yf >= 0 && xf <= 0 && mag < 150){
 			particle[i].vel[0] += (200000/pow(mag,3))*xf*cos(theta);
                         particle[i].vel[1] -= (200000/pow(mag,3))*yf*sin(theta);
+			particle[i].t = 99;
 		    }
 		}
 	
@@ -543,7 +547,8 @@ if(g.s == 1){
             g.w ++;
         }
 
-        }// Check if box will go out of bounds
+        }
+    // Check if box will go out of bounds
         if(box.pos[1] > g.yres - box.h){
 			box.vel[1] = 0;
 			box.pos[1] = g.yres - box.h;

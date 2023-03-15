@@ -67,28 +67,28 @@ if(g.s == 1){
 if(g.att == 1){
     if (g.att_count%50 > 48){//This means the AI enters an attack pattern
 			     //Explosion with type 1 - 4 
-	expl_360(random(32),99,2,2,g.xres*0.5, g.yres*0.8,2 + random(3));
+	expl_360(32 + random(32),99,2,2,g.xres*0.5, g.yres*0.8,2 + random(3));
     }
 
-    if (g.att_count%250 == 0){
+    if (g.att_count%511 == 0){
 		g.a_1 = 30;
     }
-    if(g.att_count%450 == 0){
+    if(g.att_count%917 == 0){
         g.a_2 = 10;
     }
-    if(g.att_count%1500 == 0){
+    if(g.att_count%2978 == 0){
         g.a_3 = 67;
     }
-    if(g.att_count%780 == 0){
+    if(g.att_count%1527 == 0){
 		g.a_4 = 10;
     }
-    if(g.att_count%1150 == 0){
+    if(g.att_count%2356 == 0){
 		g.a_5 = 100;
     }
-    if(g.att_count%960 == 0){
+    if(g.att_count%2074 == 0){
 		g.a_6 = 40;
     }
-    if(g.att_count%600 == 0){
+    if(g.att_count%1175 == 0){
 		g.a_7 = 200;
     }
     g.att_count ++;
