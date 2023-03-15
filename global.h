@@ -12,6 +12,7 @@ class Global {
 	int n; // Particle number
 	int w; // times hit or lives
 	int s; // time stop
+	int tp; // Teleport 
 	int d;// debug mode
 	int done; // check if game is done
 	int curr_att;
