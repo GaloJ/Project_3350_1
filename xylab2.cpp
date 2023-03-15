@@ -32,6 +32,7 @@ Global::Global()
     n = 0;
     w = 0;
     done = 0;
+    tp = 0;
     a_1 = a_2 = a_3 = a_4 = a_5 = a_6 = a_7 = 0;
     rep_ctr = 0;
     curr_att = 10; //Number of attacks left per attack cycle
@@ -332,12 +333,32 @@ void action(void)
 // Function reserved for actions that are persistent, for example making a laser like
 // attack where multiple small particles are made in quick succession 
 {
-	int static deaccel = 0.75;
     	int static toggle_d = 0;
 	int static toggle_att = 0;
 	int static toggle_s = 0;
 	int static toggle_r = 0;
+	int static toggle_w = 0;
+
 	int static max_spd = 5;
+	int static deaccel = 0.75;
+
+
+	if (g.keys[XK_q]){
+		max_spd = 15;
+	}else{
+		max_spd = 5;
+	}
+
+        if(g.keys[XK_w] && toggle_w == 0){//-----------w
+                if(g.tp == 0){
+                        g.tp = 1;
+                }else{
+                        g.tp = 0;
+                }
+                toggle_w = 1;
+        }else if(!g.keys[XK_w] && toggle_w == 1){
+                toggle_w = 0;
+        }
 
 
 	if (g.keys[XK_Up]){
@@ -548,6 +569,24 @@ if(g.s == 1){
         }
 
         }
+
+    	if (g.tp == 1){
+	    if(box.vel[0] > 0){
+		box.pos[0] = box.pos[0] + 100;
+	    }
+	    else if(box.vel[0] < 0){
+		box.pos[0] = box.pos[0] - 100;
+	    }
+
+	    if(box.vel[1] > 0){
+                box.pos[1] = box.pos[1] + 100;
+	    }
+            else if(box.vel[1] < 0){
+                box.pos[1] = box.pos[1] - 100;
+	    }
+
+	}
+
     // Check if box will go out of bounds
         if(box.pos[1] > g.yres - box.h){
 			box.vel[1] = 0;
@@ -567,6 +606,7 @@ if(g.s == 1){
         }
 }
 g.rep_ctr = 0; // so that it only happends once
+g.tp = 0; // only teleport once
 }
 
 void render()
