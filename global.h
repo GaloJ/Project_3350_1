@@ -21,6 +21,7 @@ class Global {
 	int difficulty;
 	int a_1,a_2,a_3,a_4, a_5, a_6, a_7;
 	int rep_ctr; // repel power up counter
+	GLuint texture;
 
 	
 	Global();

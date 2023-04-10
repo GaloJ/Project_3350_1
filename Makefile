@@ -1,8 +1,8 @@
-all: xylab2 
+all: main 
 
-xylab2: xylab2.cpp gjimenez4.cpp global.h
-	g++ xylab2.cpp gjimenez4.cpp aynostroza.cpp libggfonts.a fonts.h -Wall -lX11 -lGL -lGLU -lm -oxylab2
+main: main.cpp gjimenez4.cpp global.h
+	g++ main.cpp gjimenez4.cpp aynostroza.cpp libggfonts.a fonts.h -Wall -lX11 -lGL -lGLU -lm -omain
 
 clean:
-	rm -f xylab2 
+	rm -f main
 
