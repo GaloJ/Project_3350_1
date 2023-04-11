@@ -1,13 +1,6 @@
 //Arjun Ynostroza
 //3350 project
-/*#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <math.h>
-#include <X11/Xlib.h>
-#include <X11/keysym.h>
-#include <GL/glx.h>*/
+
 #include <iostream>
 using namespace std;
 #include <stdio.h>
@@ -24,14 +17,25 @@ using namespace std;
 #include "box.h"
 
 
-//extern Global g;
 
-/*class Image {
+extern Global g;
+//extern Image img;
+
+
+extern void background_debug(void)
+{
+	glClear(GL_COLOR_BUFFER_BIT);
+	glClearColor(0.1, 0.1, 0.1, 1.0);
+}
+
+/*class Image 
+{
 public:
 	int width, height;
 	unsigned char *data;
 	~Image() { delete [] data; }
-	Image(const char *fname) {
+	Image(const char *fname) 
+	{
 		if (fname[0] == '\0')
 			return;
 		char name[40];
@@ -44,7 +48,8 @@ public:
 		sprintf(ts, "convert %s %s", fname, ppmname);
 		system(ts);
 		FILE *fpi = fopen(ppmname, "r");
-		if (fpi) {
+		if (fpi) 
+		{
 			char line[200];
 			fgets(line, 200, fpi);
 			fgets(line, 200, fpi);
@@ -70,7 +75,8 @@ Image img[1] = {"background.gif"};
 */
 
 //global.h file
-/*class Texture {
+/*class Texture 
+{
 public:
 	Image *backImage;
 	GLuint backTexture;
@@ -79,34 +85,28 @@ public:
 };
 */
 
-
-//class Global {
-//public:
-	//int xres, yres;
-//	*****Texture tex;*******
-	//Global() {
-	//	xres=640, yres=480;
-	//}
-//} g;
-
-/*class X11_wrapper {
+/*class X11_wrapper 
+{
 private:
 	Display *dpy;
 	Window win;
 	GLXContext glc;
 public:
-	X11_wrapper() {
+	X11_wrapper() 
+	{
 		GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
 		//GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, None };
 		setup_screen_res(640, 480);
 		dpy = XOpenDisplay(NULL);
-		if(dpy == NULL) {
+		if(dpy == NULL) 
+		{
 			printf("\n\tcannot connect to X server\n\n");
 			exit(EXIT_FAILURE);
 		}
 		Window root = DefaultRootWindow(dpy);
 		XVisualInfo *vi = glXChooseVisual(dpy, 0, att);
-		if(vi == NULL) {
+		if(vi == NULL) 
+		{
 			printf("\n\tno appropriate visual found\n\n");
 			exit(EXIT_FAILURE);
 		} 
@@ -124,15 +124,18 @@ public:
 		glc = glXCreateContext(dpy, vi, NULL, GL_TRUE);
 		glXMakeCurrent(dpy, win, glc);
 	}
-	void cleanupXWindows() {
+	void cleanupXWindows() 
+	{
 		XDestroyWindow(dpy, win);
 		XCloseDisplay(dpy);
 	}
-	void setup_screen_res(const int w, const int h) {
+	void setup_screen_res(const int w, const int h) 
+	{
 		g.xres = w;
 		g.yres = h;
 	}
-	void reshape_window(int width, int height) {
+	void reshape_window(int width, int height) 
+	{
 		//window has been resized.
 		setup_screen_res(width, height);
 		glViewport(0, 0, (GLint)width, (GLint)height);
@@ -141,63 +144,41 @@ public:
 		glOrtho(0, g.xres, 0, g.yres, -1, 1);
 		set_title();
 	}
-	void set_title() {
+	void set_title() 
+	{
 		//Set the window title bar.
 		XMapWindow(dpy, win);
 		XStoreName(dpy, win, "scrolling background (seamless)");
 	}
-	bool getXPending() {
+	bool getXPending() 
+	{
 		return XPending(dpy);
 	}
-	XEvent getXNextEvent() {
+	XEvent getXNextEvent() 
+	{
 		XEvent e;
 		XNextEvent(dpy, &e);
 		return e;
 	}
-	void swapBuffers() {
+	void swapBuffers() 
+	{
 		glXSwapBuffers(dpy, win);
 	}
-	void check_resize(XEvent *e) {
+	void check_resize(XEvent *e) 
+	{
 		//The ConfigureNotify is sent by the
 		//server if the window is resized.
 		if (e->type != ConfigureNotify)
 			return;
 		XConfigureEvent xce = e->xconfigure;
-		if (xce.width != g.xres || xce.height != g.yres) {
+		if (xce.width != g.xres || xce.height != g.yres) 
+		{
 			//Window size did change.
 			reshape_window(xce.width, xce.height);
 		}
 	}
 } x11;
 */
-
-//void init_opengl(void);
-//void check_mouse(XEvent *e);
-//int check_keys(XEvent *e);
-//void physics(void);
-//void render(void);
-
-
-//===========================================================================
-//===========================================================================
-//int main()
-//{
-//	init_opengl();
-//	int done=0;
-//	while (!done) {
-//		while (x11.getXPending()) {
-//			XEvent e = x11.getXNextEvent();
-//			x11.check_resize(&e);
-//			check_mouse(&e);
-//			done = check_keys(&e);
-//		}
-//		physics();
-//		render();
-//		x11.swapBuffers();
-//	}
-//	return 0;
-//}
-
 /*void init_opengl(void)
 {
 	//OpenGL initialization
