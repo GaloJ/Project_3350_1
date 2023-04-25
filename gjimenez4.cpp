@@ -185,6 +185,8 @@ void attacks(void)
 void screen_write(Rect r1)
 {
     char words[5][100] = {"curr att:" , "times hit:", "Score:", "" , ""};
+    char onscreen[6][25] = {"Lives:","Score:","Dash:"
+        ,"Teleport:","Repel:","Shield:"};
     char int_str[9], int_str_2[9], int_str_3[9];
 
     //Create a char string, and give it the int value to char of a global
