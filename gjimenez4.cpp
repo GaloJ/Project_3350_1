@@ -185,53 +185,36 @@ void attacks(void)
 void screen_write(Rect r1)
 {
 
-    const char* words[5] = {"" , "", "", "" , ""};
+    char words[5][100] = {"curr att:" , "times hit:", "Score:", "" , ""};
     char int_str[9], int_str_2[9], int_str_3[9];
 
     //Create a char string, and give it the int value to char of a global
     sprintf(int_str, "%d" , g.n);
-    words[0] = int_str;
+    strcat(words[0], int_str);
 
     sprintf(int_str_2, "%d" , g.w);
-    words[1] = int_str_2;
+    strcat(words[1], int_str_2);
 
     sprintf(int_str_3, "%d" , g.att_count);
-    words[2] = int_str_3;
+    strcat(words[2], int_str_3);
 
-    r1.bot = g.yres - g.yres*0.1;
-    r1.left = g.xres - g.xres*0.1;
-    r1.center = 0;
-    ggprint8b(&r1,16,0x00ff0000, words[0]);
-
-    r1.bot = g.yres - g.yres*0.125;
-    r1.left = g.xres - g.xres*0.1;
-    r1.center = 0;
-    ggprint8b(&r1,16,0x00ff0000, words[1]);
-
-    r1.bot = g.yres - g.yres*0.15;
-    r1.left = g.xres - g.xres*0.1;
-    r1.center = 0;
-    ggprint8b(&r1,16,0x00ff0000, words[2]);
-
-    r1.bot = g.yres - g.yres*0.15;
-    r1.left = g.xres - g.xres*0.3;
-    r1.center = 0;
-    if (g.s == 1) {
-	ggprint8b(&r1,16,0x00ff0000, "Time Not Stopped");
-    } else {
-	ggprint8b(&r1,16,0x00ff0000, "Time Stopped");
+    if (g.s != 1) {
+	r1.bot = g.yres/2;
+	r1.left = g.xres/2;
+	r1.center = -10;
+	ggprint8b(&r1,16,0x00ff0000, "PAUSED");
     }
 
-    r1.bot = g.yres - g.yres*0.2;
+    r1.bot = g.yres - g.yres*0.05;
     r1.left = g.xres - g.xres*0.2;
     r1.center = 0;
     if (g.d == 1) {
+	ggprint8b(&r1,16,0x00ff0000, words[0]);
+	ggprint8b(&r1,16,0x00ff0000, words[1]);
+	ggprint8b(&r1,16,0x00ff0000, words[2]);
 	ggprint8b(&r1,16,0x00ff0000, "DEBUG ON");
-	r1.bot -= 20;
 	ggprint8b(&r1,16,0x00ff0000, "1 - 7 for attacks");
-	r1.bot -= 20;
 	ggprint8b(&r1,16,0x00ff0000, "s to stop time");
-	r1.bot -= 20;
 	ggprint8b(&r1,16,0x00ff0000, "placeholder");
     }
 
