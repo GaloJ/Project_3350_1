@@ -24,8 +24,7 @@ extern Global g;
 
 extern void background_debug(void)
 {
-	glClear(GL_COLOR_BUFFER_BIT);
-	glClearColor(0.1, 0.1, 0.1, 1.0);
+	g.debug ^= 1;
 }
 
 /*class Image 

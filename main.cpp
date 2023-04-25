@@ -40,6 +40,7 @@ Global::Global()
     att_count = 1; // Must be 1 or all attacks proc at the start
     difficulty = 50;
     memset(keys, 0, 65536);
+    debug = 1;
 }Global g;
 
 Box::Box(){
@@ -52,6 +53,8 @@ Box::Box(){
     pos_i[1] = pos[1];
     vel[0] = 0.0;
     vel[1] = 0.0;
+    //////////////
+    color[0] = color[1] = color[2] = 1.0;
 }
 
 Box::Box(int type, float wid, float hgt, float x, float y, float v0,float v1)
@@ -357,6 +360,7 @@ int X11_wrapper::check_keys(XEvent *e)
 		return 0;
 	}
 
+
 	if (e->type == KeyPress) {
 		//std::cout << "press" << std::endl;
 		g.keys[key]=1;
@@ -376,10 +380,10 @@ void init_opengl(void)
     //Set 2D mode (no perspective)
     glOrtho(0, g.xres, 0, g.yres, -1, 1);
     //Set the screen background color
-    glClearColor(0.1, 0.1, 0.1, 1.0);
+    glClearColor(1.0, 1.0, 1.0, 1.0);
     //Set Box Color
-    unsigned char c[3] = {100,200,100};
-    box.set_color(c);
+    //unsigned char c[3] = {100,200,100};
+    //box.set_color(c);
     glEnable(GL_TEXTURE_2D);
     initialize_fonts();
     //new stuff
@@ -391,10 +395,10 @@ void init_opengl(void)
     glBindTexture(GL_TEXTURE_2D, g.texture);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-    //glTexImage2D(GL_TEXTURE_2D, 0, 3, w, h, 0,
-//		    GL_RGB, GL_UNSIGNED_BYTE, g.texture->data);
     glTexImage2D(GL_TEXTURE_2D, 0, 3, w, h, 0,
 		    GL_RGB, GL_UNSIGNED_BYTE, img.data);
+    glBindTexture(GL_TEXTURE_2D, g.texture);
+    	glColor3f(1.0, 1.0, 1.0);
 
     //g.tex.xc[0] = 0.0;
     //g.tex.xc[1] = 0.25;
@@ -470,13 +474,16 @@ void action(void)
 
 	if(g.keys[XK_d] && toggle_d == 0){//------------d
 		if(g.d == 0){
-			g.d = 1;
+			g.d = 1;   
 		}else{
 			g.d = 0;
 		}
 		toggle_d = 1;
 	}else if(!g.keys[XK_d] && toggle_d == 1){
 		toggle_d = 0;
+		//****************************************************
+		background_debug();
+		//g.debug ^= 1;
 	}
 
 	if(g.keys[XK_a] && toggle_att == 0){//-----------att
@@ -693,18 +700,20 @@ void render()
 	Rect r1;
 	glClear(GL_COLOR_BUFFER_BIT);
 	//Draw background
-	glBindTexture(GL_TEXTURE_2D, g.texture);
-	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 2.0f); glVertex2i(0,      0);
-	glTexCoord2f(0.0f, 0.0f); glVertex2i(0,      g.yres);
-	glTexCoord2f(2.0f, 0.0f); glVertex2i(g.xres, g.yres);
-	glTexCoord2f(2.0f, 2.0f); glVertex2i(g.xres, 0);
-	//glTexCoord2f(g.texture[0], g.texture[1]); glVertex2i(0,      0);
-	//glTexCoord2f(g.texture[0], g.texture[0]); glVertex2i(0,      g.yres);
-	//glTexCoord2f(g.texture[1], g.texture[0]); glVertex2i(g.xres, g.yres);
-	//glTexCoord2f(g.texture[1], g.texture[1]); glVertex2i(g.xres, 0);
-	glEnd();
-
+	if(g.debug)                      //*********************
+	{
+		glBindTexture(GL_TEXTURE_2D, g.texture);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0.0f, 2.0f); glVertex2i(0,      0);
+		glTexCoord2f(0.0f, 0.0f); glVertex2i(0,      g.yres);
+		glTexCoord2f(2.0f, 0.0f); glVertex2i(g.xres, g.yres);
+		glTexCoord2f(2.0f, 2.0f); glVertex2i(g.xres, 0);
+		//glTexCoord2f(g.texture[0], g.texture[1]); glVertex2i(0,      0);
+		//glTexCoord2f(g.texture[0], g.texture[0]); glVertex2i(0,      g.yres);
+		//glTexCoord2f(g.texture[1], g.texture[0]); glVertex2i(g.xres, g.yres);
+		//glTexCoord2f(g.texture[1], g.texture[1]); glVertex2i(g.xres, 0);
+		glEnd();
+	}
 
      // Draw box (player)
 	glPushMatrix();
@@ -714,7 +723,7 @@ void render()
 	glVertex2f(-box.w,  box.h);
 	glVertex2f( box.w,  box.h);
 	glVertex2f( box.w, -box.h);	
-	glColor3ubv(box.color);
+	glColor3fv(box.color);
 	glEnd();
 	glPopMatrix();
 
@@ -747,7 +756,7 @@ void render()
         glVertex2i(g.xres-t,t);
         glVertex2i(0,0);
         glVertex2i(t,t); 
-	background_debug();
+	//background_debug();
     	glEnd();
 	}
 
