@@ -3,7 +3,7 @@
 //date: April 10th
 //
 //author: Gordon Griesel
-//date: Spring 2022
+//date: Spring 2023
 //purpose: get openGL working on your personal computer
 //
 #include <iostream>
@@ -35,6 +35,7 @@ Global::Global()
     done = 0;
     tp = 0;
     a_1 = a_2 = a_3 = a_4 = a_5 = a_6 = a_7 = 0;
+    dash = teleport = repel = shield = 0;
     rep_ctr = 0;
     curr_att = 10; //Number of attacks left per attack cycle
     att_count = 1; // Must be 1 or all attacks proc at the start

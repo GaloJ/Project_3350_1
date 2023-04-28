@@ -77,18 +77,22 @@ void attacks(void)
 
             if (g.att_count%511 == 0) {
                 g.a_1 = 30;
+		g.dash ++;
             }
             if(g.att_count%917 == 0) {
                 g.a_2 = 10;
             }
             if(g.att_count%2978 == 0) {
                 g.a_3 = 67;
+		g.shield ++;
             }
             if(g.att_count%1527 == 0) {
                 g.a_4 = 10;
+		g.repel ++;
             }
             if(g.att_count%2356 == 0) {
                 g.a_5 = 100;
+		g.teleport ++;
             }
             if(g.att_count%2074 == 0) {
                 g.a_6 = 40;
@@ -186,34 +190,65 @@ void screen_write(Rect r1)
 {
     char words[5][100] = {"curr att:" , "times hit:", "Score:", "" , ""};
     char onscreen[6][25] = {"Lives:","Score:","Dash:"
-        ,"Teleport:","Repel:","Shield:"};
-    char int_str[9], int_str_2[9], int_str_3[9];
+	,"Teleport:","Repel:","Shield:"};
+    char cstr [20][9];	
 
     //Create a char string, and give it the int value to char of a global
-    sprintf(int_str, "%d" , g.n);
-    strcat(words[0], int_str);
-    sprintf(int_str_2, "%d" , g.w);
-    strcat(words[1], int_str_2);
-    sprintf(int_str_3, "%d" , g.att_count);
-    strcat(words[2], int_str_3);
+    sprintf(cstr[0], "%d" , g.n);
+    strcat(words[0], cstr[0]);
+
+    sprintf(cstr[1], "%d" , g.w);
+    strcat(words[1], cstr[1]);
+
+    sprintf(cstr[2], "%d" , g.att_count);
+    strcat(words[2], cstr[2]);
+
+    sprintf(cstr[3], "%d" , (10 - g.w));
+    strcat(onscreen[0], cstr[3]);
+
+    sprintf(cstr[4], "%d" , g.att_count);
+    strcat(onscreen[1], cstr[4]);
+
+    sprintf(cstr[5], "%d" , g.dash);
+    strcat(onscreen[2], cstr[5]);
+
+    sprintf(cstr[6], "%d" , g.teleport);
+    strcat(onscreen[3], cstr[6]);
+
+    sprintf(cstr[7], "%d" , g.repel);
+    strcat(onscreen[4], cstr[7]);
+
+    sprintf(cstr[8], "%d" , g.shield);
+    strcat(onscreen[5], cstr[8]);
+
+    r1.bot = g.yres - g.yres*0.05;
+    r1.left = 0.1*g.xres;
+    r1.center = 0;
+
+    ggprint8b(&r1,16,0x00ff0000, onscreen[0]);
+    ggprint8b(&r1,16,0x00ff0000, onscreen[1]);
+    ggprint8b(&r1,16,0x00ff0000, onscreen[2]);
+    ggprint8b(&r1,16,0x00ff0000, onscreen[3]);
+    ggprint8b(&r1,16,0x00ff0000, onscreen[4]);
+    ggprint8b(&r1,16,0x00ff0000, onscreen[5]);
 
     if (g.s != 1) {
-        r1.bot = g.yres/2;
-        r1.left = g.xres/2;
-        r1.center = -10;
-        ggprint8b(&r1,16,0x00ff0000, "PAUSED");
+	r1.bot = g.yres/2;
+	r1.left = g.xres/2;
+	r1.center = -10;
+	ggprint8b(&r1,16,0x00ff0000, "PAUSED");
     }
 
     r1.bot = g.yres - g.yres*0.05;
     r1.left = g.xres - g.xres*0.2;
     r1.center = 0;
     if (g.d == 1) {
-        ggprint8b(&r1,16,0x00ff0000, words[0]);
-        ggprint8b(&r1,16,0x00ff0000, words[1]);
-        ggprint8b(&r1,16,0x00ff0000, words[2]);
-        ggprint8b(&r1,16,0x00ff0000, "DEBUG ON");
-        ggprint8b(&r1,16,0x00ff0000, "1 - 7 for attacks");
-        ggprint8b(&r1,16,0x00ff0000, "s to stop time");
-        ggprint8b(&r1,16,0x00ff0000, "placeholder");
+	ggprint8b(&r1,16,0x00ff0000, words[0]);
+	ggprint8b(&r1,16,0x00ff0000, words[1]);
+	ggprint8b(&r1,16,0x00ff0000, words[2]);
+	ggprint8b(&r1,16,0x00ff0000, "DEBUG ON");
+	ggprint8b(&r1,16,0x00ff0000, "1 - 7 for attacks");
+	ggprint8b(&r1,16,0x00ff0000, "s to stop time");
+	ggprint8b(&r1,16,0x00ff0000, "placeholder");
     }
 }

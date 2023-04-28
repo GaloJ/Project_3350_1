@@ -22,6 +22,10 @@ class Global {
 	int a_1,a_2,a_3,a_4, a_5, a_6, a_7;
 	int rep_ctr; // repel power up counter
 	int debug;
+	int dash; 
+	int teleport;
+	int repel;
+	int shield;
 	GLuint texture;
 
 	
