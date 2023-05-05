@@ -236,7 +236,10 @@ void screen_write(Rect r1)
 	r1.bot = g.yres/2;
 	r1.left = g.xres/2;
 	r1.center = -10;
-	ggprint8b(&r1,16,0x00ff0000, "PAUSED");
+	if (g.w >= 10)
+	    ggprint8b(&r1,16,0x00ff0000,"Score: %d",g.att_count);
+	else
+	    ggprint8b(&r1,16,0x00ff0000, "PAUSED");
     }
 
     r1.bot = g.yres - g.yres*0.05;

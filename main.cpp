@@ -506,6 +506,10 @@ void action(void)
 	}
 	}
 
+	if(g.w >= 10) {
+		g.s = 0;
+	} 
+
 	if(g.keys[XK_Escape]){
 		g.done = 1;
 	}
