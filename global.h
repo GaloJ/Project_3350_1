@@ -2,6 +2,7 @@
 #include <iostream>
 using namespace std;
 #include <stdio.h>
+#pragma once
 
 const int MAX_PARTICLES = 10000;
 
@@ -26,6 +27,9 @@ class Global {
 	int teleport;
 	int repel;
 	int shield;
+	//
+	float background_scroll;
+	//
 	GLuint texture;
 
 	

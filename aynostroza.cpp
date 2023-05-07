@@ -68,8 +68,27 @@ Image::Image(const char *fname)
                 unlink(ppmname);
 }
 
-extern void background_debug(void)
+void background_debug(void)
 {
 	g.debug ^= 1;
 }
+
+void change_background()
+{
+	static int current_background = 0;
+	const char *backgrounds[] = {"background1.png", "background2.png", "background3.png"};
+	int num_backgrounds = sizeof(backgrounds) / sizeof(backgrounds[0]);
+
+	current_background = (current_background + 1) % num_backgrounds;
+	Image new_background(backgrounds[current_background]);
+
+	glGenTextures(1, &g.texture);
+	glBindTexture(GL_TEXTURE_2D, g.texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, new_background.width, new_background.height, 0,
+		       	GL_RGB, GL_UNSIGNED_BYTE, new_background.data);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 

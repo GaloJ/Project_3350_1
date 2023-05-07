@@ -25,7 +25,7 @@ using namespace std;
 
 #define PI 3.14159265
 
-Image img("background.png");
+Image img("background1.png");
 
 Global::Global()
 {
@@ -46,6 +46,8 @@ Global::Global()
     difficulty = 50;
     memset(keys, 0, 65536);
     debug = 1;
+    ///////////////
+    background_scroll = 0.0f;
 }Global g;
 
 Box::Box(){
@@ -116,6 +118,7 @@ extern float inv_tan(float, float);
 
 //Extern Arjun prototypes
 extern void background_debug();
+extern void change_background();
 
 //=====================================
 // MAIN FUNCTION IS HERE
@@ -134,6 +137,7 @@ int main()
 	}
 	glBindTexture(GL_TEXTURE_2D, g.texture);
 		glColor3f(1.0, 1.0, 1.0);
+	g.background_scroll += 0.002f;
 	attacks();
 	action();
 	physics();
@@ -313,8 +317,13 @@ int X11_wrapper::check_keys(XEvent *e)
 	//Log("key: %i\n", key);
 	if (e->type == KeyRelease) {
 		g.keys[key] = 0;
+		if (key == XK_y)
+		{
+			change_background();
+		}
 		return 0;
 	}
+
 
 
 	if (e->type == KeyPress) {
@@ -668,10 +677,14 @@ void render()
 		glTexCoord2f(0.0f, 0.0f); glVertex2i(0,      g.yres);
 		glTexCoord2f(2.0f, 0.0f); glVertex2i(g.xres, g.yres);
 		glTexCoord2f(2.0f, 2.0f); glVertex2i(g.xres, 0);
-		//glTexCoord2f(g.texture[0], g.texture[1]); glVertex2i(0,      0);
-		//glTexCoord2f(g.texture[0], g.texture[0]); glVertex2i(0,      g.yres);
-		//glTexCoord2f(g.texture[1], g.texture[0]); glVertex2i(g.xres, g.yres);
-		//glTexCoord2f(g.texture[1], g.texture[1]); glVertex2i(g.xres, 0);
+		glEnd();
+		///////////////////////////////////////
+		float scroll = g.background_scroll;
+		glBegin(GL_QUADS);
+		glTexCoord2f(0.0f, 1.0f - scroll); glVertex2i(0, 0);
+		glTexCoord2f(1.0f, 1.0f - scroll); glVertex2i(g.xres, 0);
+		glTexCoord2f(1.0f, 0.0f - scroll); glVertex2i(g.xres, g.yres);
+		glTexCoord2f(0.0f, 0.0f - scroll); glVertex2i(0, g.yres);
 		glEnd();
 	}
 
@@ -719,7 +732,11 @@ void render()
 	//background_debug();
     	glEnd();
 	}
-
+	
+	if(g.w >= 10)
+	{
+		g.background_scroll = 0.0;
+	}
 	// SCREEN WRITINGS
     screen_write(r1);
     }
