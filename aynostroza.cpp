@@ -20,6 +20,10 @@ using namespace std;
 
 
 extern Global g;
+extern Box box;
+extern Box particle[MAX_PARTICLES];
+
+extern void make_particle(int,int,int,float,float,float,float);
 
 Image::~Image()
 {
@@ -92,18 +96,55 @@ void change_background()
 }
 
 void spawn_powerup(Box &powerup) {
-	srand(time(NULL));
+	if (g.s == 1)
+	{
+		srand(time(NULL));
 
-	// Random position within the screen
-	float x = static_cast<float>(rand() % g.xres);
-	float y = static_cast<float>(rand() % g.yres);
+		// Random position within the screen
+		float x = static_cast<float>(rand() % g.xres);
+		float y = static_cast<float>(rand() % g.yres);
 
-	// Power up size
-	float width = 20.0f;
-	float height = 20.0f;
+		// Power up size
+		float width = 20.0f;
+		float height = 20.0f;
 
-	powerup = Box(2, width, height, x, y, 0.0f, 0.0f);
-	powerup.color[0] = 0.0f; 
-	powerup.color[1] = 1.0f; 
-	powerup.color[2] = 0.0f; 
+		powerup = Box(2, width, height, x, y, 0.0f, 0.0f);
+		powerup.color[0] = 0.0f; 
+		powerup.color[1] = 1.0f; 
+		powerup.color[2] = 0.0f;
+	}
+}
+void lose_animation() {
+    if (g.w < 10) 
+    {
+        return;
+    }
+
+    float velocity = 5.0f;
+    float color_change_speed = 0.01f;
+
+    
+    box.color[0] += color_change_speed;
+    if (box.color[0] > 1.0f) 
+    {
+        box.color[0] = 1.0f;
+        box.color[1] += color_change_speed;
+        if (box.color[1] > 1.0f) 
+	{
+            box.color[1] = 1.0f;
+            box.color[2] += color_change_speed;
+            if (box.color[2] > 1.0f) 
+	    {
+                box.color[2] = 1.0f;
+            }
+        }
+    }
+    // Drift downward
+    box.pos[1] -= velocity;
+    if (box.pos[1] + box.h < 0) 
+    {
+	    box.pos[1] = box.pos[-5];
+	    make_particle(4,4,4,g.xres*0.5,g.yres*0.8,10,20);
+	    make_particle(4,4,4,g.xres*0.5,g.yres*0.8,-10,20);
+    }
 }

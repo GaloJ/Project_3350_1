@@ -61,7 +61,11 @@ Box::Box(){
     vel[0] = 0.0;
     vel[1] = 0.0;
     //////////////
-    color[0] = color[1] = color[2] = 1.0;
+    //color[0] = color[1] = color[2] = 1.0;
+    color[0] = 255;
+    color[1] = 0;
+    color[2] = 0;
+
 }
 
 Box::Box(int type, float wid, float hgt, float x, float y, float v0,float v1)
@@ -120,6 +124,7 @@ extern float inv_tan(float, float);
 extern void background_debug();
 extern void change_background();
 extern void spawn_powerup(Box &powerup);
+extern void lose_animation();
 
 //=====================================
 // MAIN FUNCTION IS HERE
@@ -147,6 +152,7 @@ int main()
 	}
 	action();
 	physics();
+	lose_animation();
 	render();
 	x11.swapBuffers();
 	usleep(20000);
@@ -533,9 +539,6 @@ void action(void)
 
 void physics(){
 
-	//g.tex.xc[0] += 0.001;
-	//g.tex.xc[1] += 0.001;
-
 if(g.s == 1){
     for(int i=0; i < g.n ; i++){
 
@@ -710,7 +713,8 @@ void render()
 	glPushMatrix();
 	glTranslatef(box.pos[0], box.pos[1], 0.0f);
 	glBegin(GL_QUADS);
-	glColor3f(1.0, 0.0, 0.0); // Box color
+	//
+	glColor3f(box.color[0], box.color[1], box.color[2]); // Box color
 	glVertex2i(-box.w, -box.h);
 	glVertex2i(-box.w,  box.h);
 	glVertex2i( box.w,  box.h);
@@ -758,7 +762,6 @@ void render()
         glVertex2i(g.xres-t,t);
         glVertex2i(0,0);
         glVertex2i(t,t); 
-	//background_debug();
     	glEnd();
 	}
 	
