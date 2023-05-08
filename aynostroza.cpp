@@ -114,6 +114,7 @@ void spawn_powerup(Box &powerup) {
 		powerup.color[2] = 0.0f;
 	}
 }
+
 void lose_animation() {
     if (g.w < 10) 
     {
@@ -141,10 +142,12 @@ void lose_animation() {
     }
     // Drift downward
     box.pos[1] -= velocity;
-    if (box.pos[1] + box.h < 0) 
+    /*
+    if (box.pos[1] + box.h < -100) 
     {
 	    box.pos[1] = box.pos[-5];
 	    make_particle(4,4,4,g.xres*0.5,g.yres*0.8,10,20);
 	    make_particle(4,4,4,g.xres*0.5,g.yres*0.8,-10,20);
     }
+    */
 }
