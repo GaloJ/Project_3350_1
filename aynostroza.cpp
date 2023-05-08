@@ -91,4 +91,19 @@ void change_background()
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+void spawn_powerup(Box &powerup) {
+	srand(time(NULL));
 
+	// Random position within the screen
+	float x = static_cast<float>(rand() % g.xres);
+	float y = static_cast<float>(rand() % g.yres);
+
+	// Power up size
+	float width = 20.0f;
+	float height = 20.0f;
+
+	powerup = Box(2, width, height, x, y, 0.0f, 0.0f);
+	powerup.color[0] = 0.0f; 
+	powerup.color[1] = 1.0f; 
+	powerup.color[2] = 0.0f; 
+}

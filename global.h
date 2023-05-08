@@ -32,7 +32,6 @@ class Global {
 	//
 	GLuint texture;
 
-	
 	Global();
 };
 

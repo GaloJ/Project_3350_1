@@ -80,7 +80,7 @@ Box::Box(int type, float wid, float hgt, float x, float y, float v0,float v1)
 
 Box box;
 Box particle[MAX_PARTICLES];
-
+Box powerup;
 
 class X11_wrapper {
     private:
@@ -119,6 +119,7 @@ extern float inv_tan(float, float);
 //Extern Arjun prototypes
 extern void background_debug();
 extern void change_background();
+extern void spawn_powerup(Box &powerup);
 
 //=====================================
 // MAIN FUNCTION IS HERE
@@ -126,6 +127,8 @@ extern void change_background();
 int main()
 {
     init_opengl();
+    //initialize_fonts();
+    initialize_fonts();
     //Main loop
     while (!g.done) {
 	//Process external events.
@@ -139,12 +142,16 @@ int main()
 		glColor3f(1.0, 1.0, 1.0);
 	g.background_scroll += 0.002f;
 	attacks();
+	if (rand() % 1000 < 5) { // Randomly call spawn_powerup()
+		spawn_powerup(powerup);
+	}
 	action();
 	physics();
 	render();
 	x11.swapBuffers();
 	usleep(20000);
     }
+    //cleanup_fonts();
     return 0;
 }
 
@@ -345,7 +352,7 @@ void init_opengl(void)
     //Set 2D mode (no perspective)
     glOrtho(0, g.xres, 0, g.yres, -1, 1);
     //Set the screen background color
-    glClearColor(1.0, 1.0, 1.0, 1.0);
+    glClearColor(66, 135, 245, 0.5);
     //Set Box Color
     //unsigned char c[3] = {100,200,100};
     //box.set_color(c);
@@ -579,6 +586,13 @@ if(g.s == 1){
             particle[i].vel[0] += 0.025*particle[i].vel[0];
             particle[i].vel[1] += 0.025*particle[i].vel[1];
         }
+		if (box.pos[0] + box.w >= powerup.pos[0] && box.pos[0] <= powerup.pos[0] + 
+				powerup.w && box.pos[1] + box.h >= powerup.pos[1] && 
+				box.pos[1] <= powerup.pos[1] + powerup.h) {
+			g.att_count += 1000; // Increase player's score by 1000
+			powerup.pos[0] = -100.0f; // Move powerup off-screen
+		}
+
 		//BM p4 explosion xD
 	
 		if (g.rep_ctr == 1){ // Repel physics logic
@@ -668,9 +682,11 @@ void render()
 	static int t = 20;
 	Rect r1;
 	glClear(GL_COLOR_BUFFER_BIT);
+
 	//Draw background
-	if(g.debug)                      //*********************
+	if(g.debug)
 	{
+		glEnable(GL_TEXTURE_2D); // Enable texture for the background
 		glBindTexture(GL_TEXTURE_2D, g.texture);
 		glBegin(GL_QUADS);
 		glTexCoord2f(0.0f, 2.0f); glVertex2i(0,      0);
@@ -678,7 +694,7 @@ void render()
 		glTexCoord2f(2.0f, 0.0f); glVertex2i(g.xres, g.yres);
 		glTexCoord2f(2.0f, 2.0f); glVertex2i(g.xres, 0);
 		glEnd();
-		///////////////////////////////////////
+
 		float scroll = g.background_scroll;
 		glBegin(GL_QUADS);
 		glTexCoord2f(0.0f, 1.0f - scroll); glVertex2i(0, 0);
@@ -686,17 +702,19 @@ void render()
 		glTexCoord2f(1.0f, 0.0f - scroll); glVertex2i(g.xres, g.yres);
 		glTexCoord2f(0.0f, 0.0f - scroll); glVertex2i(0, g.yres);
 		glEnd();
+		glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture for the boxes
 	}
 
-     // Draw box (player)
+	// Draw box (player)
+	//glDisable(GL_TEXTURE_2D); // Disable texture for the boxes
 	glPushMatrix();
 	glTranslatef(box.pos[0], box.pos[1], 0.0f);
 	glBegin(GL_QUADS);
-	glVertex2f(-box.w, -box.h);
-	glVertex2f(-box.w,  box.h);
-	glVertex2f( box.w,  box.h);
-	glVertex2f( box.w, -box.h);	
-	glColor3fv(box.color);
+	glColor3f(1.0, 0.0, 0.0); // Box color
+	glVertex2i(-box.w, -box.h);
+	glVertex2i(-box.w,  box.h);
+	glVertex2i( box.w,  box.h);
+	glVertex2i( box.w, -box.h);
 	glEnd();
 	glPopMatrix();
 
@@ -715,6 +733,17 @@ void render()
 	glEnd();
 	glPopMatrix();
     }
+    // Draw powerup
+    glColor3f(powerup.color[0], powerup.color[1], powerup.color[2]);
+    glPushMatrix();
+    glTranslatef(powerup.pos[0], powerup.pos[1], 0);
+    glBegin(GL_QUADS);
+    glVertex2i(0, 0);
+    glVertex2i(0, powerup.h);
+    glVertex2i(powerup.w, powerup.h);
+    glVertex2i(powerup.w, 0);
+    glEnd();
+    glPopMatrix();
 
     	if(g.d == 1){	
      	glColor3f(0.0, 1.0, 0.0);
